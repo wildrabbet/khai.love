@@ -1,16 +1,23 @@
 # khai.love
 
-Static site for **khai.love**, served by GitHub Pages from the `main` branch root.
+Static site for **khai.love**. A single-page placeholder — no build step, no dependencies.
 
-Right now it's a single-page placeholder — no build step, no dependencies.
+## Where it's served
+
+**Production: Namecheap shared hosting (cPanel).** The domain uses Namecheap Web Hosting
+DNS, so cPanel owns the DNS records and serves whatever sits in the account's
+`public_html`. Deploys are file uploads, not git pushes.
+
+**Preview: GitHub Pages** at <https://wildrabbet.github.io/khai.love/>, built from `main`.
+Handy for checking a change before uploading it. No custom domain attached — that's
+deliberate, so GitHub doesn't compete with the real host for khai.love.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
 | `index.html` | The whole site. Inline CSS, no assets. |
-| `CNAME` | Tells GitHub Pages to serve on the custom domain. Don't delete it. |
-| `.nojekyll` | Skips Jekyll processing so files starting with `_` are served as-is. |
+| `.nojekyll` | Skips Jekyll on the Pages preview. |
 
 ## Local preview
 
@@ -20,18 +27,18 @@ Open `index.html` in a browser, or:
 python -m http.server 8000
 ```
 
-## Deploying
+## Deploying to production
 
-Push to `main`. Pages rebuilds automatically, usually within a minute.
+1. cPanel → **File Manager** → the docroot (`public_html`, or `public_html/khai.love`
+   if khai.love is an addon domain).
+2. Delete the parking placeholder (`default.html` / `index.php`) if present — a stale
+   `index.php` will win over `index.html`.
+3. Upload `index.html`.
 
-## DNS
+To automate later, cPanel's **Git Version Control** can clone this repo and deploy on
+pull.
 
-`khai.love` needs these records at the registrar:
+## Email
 
-```
-A     @      185.199.108.153
-A     @      185.199.109.153
-A     @      185.199.110.153
-A     @      185.199.111.153
-CNAME www    wildrabbet.github.io.
-```
+`amanda@khai.love` is a cPanel mailbox (cPanel → Email Accounts), included with the
+hosting plan. Webmail lives at `khai.love/webmail`.
