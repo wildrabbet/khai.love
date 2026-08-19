@@ -1,98 +1,113 @@
 (() => {
-  const canvas = document.getElementById('cognitionGraph');
-  if (!canvas) return;
-  const stage = canvas.closest('.neural-stage');
-  const ctx = canvas.getContext('2d');
-  const detail = document.getElementById('nodeDetail');
-  const translation = document.getElementById('agentTranslation');
-  const resetBtn = document.getElementById('graphReset');
-  const pulseBtn = document.getElementById('graphPulse');
-  const profileName = document.getElementById('profileName');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const metricEls = {
-    reason:[document.getElementById('metricReason'),document.getElementById('metricReasonVal')],
-    speed:[document.getElementById('metricSpeed'),document.getElementById('metricSpeedVal')],
-    verify:[document.getElementById('metricVerify'),document.getElementById('metricVerifyVal')],
-    memory:[document.getElementById('metricMemory'),document.getElementById('metricMemoryVal')]
-  };
-  const colors={reasoning:'#f39bc8',memory:'#9b7cff',coordination:'#7be8df',execution:'#f0ca8b',verification:'#8ed7ff'};
-  const sigmoid=x=>1/(1+Math.exp(-x));
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const canvas=document.getElementById('cognitionGraph'); if(!canvas)return;
+  const stage=canvas.closest('.neural-stage'),ctx=canvas.getContext('2d');
+  const detail=document.getElementById('nodeDetail'),translation=document.getElementById('agentTranslation');
+  const profileName=document.getElementById('profileName');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const metricsBox=document.querySelector('.lab-metrics');
+  const controls=document.querySelector('.profile-controls');
+  const pulseBtn=document.getElementById('graphPulse'),resetBtn=document.getElementById('graphReset');
+  [controls,pulseBtn,resetBtn].forEach(el=>{if(el)el.style.display='none'});
 
+  const link=document.createElement('link');link.rel='stylesheet';link.href='neural-puzzle-v2.css';document.head.appendChild(link);
+
+  const colors={reasoning:'#f29dcc',memory:'#a98cff',coordination:'#75e9df',execution:'#ffd08a',verification:'#86d9ff'};
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const sigmoid=x=>1/(1+Math.exp(-x));
   const defs=[
-    ['brief','Brief','reasoning','Input layer','Turns the customer outcome into a bounded signal: objective, constraints and evidence.','Problem framing',0,1.35],
-    ['context','Project Context','memory','Memory layer','Carries accepted project history into the current problem without rebuilding it from scratch.','Inherited context',1,.92],
-    ['plans','Independent Plans','reasoning','Reasoning layer','Produces multiple candidate approaches before convergence.','Parallel reasoning',2,1.18],
-    ['review','Decision Review','reasoning','Reasoning layer','Compares candidate plans and suppresses weak or conflicting approaches.','Decision convergence',3,1.12],
-    ['routing','Specialist Routing','coordination','Routing layer','Routes the chosen work toward the role most capable of executing it.','Capability routing',4,1.02],
-    ['claims','Claims','coordination','Control layer','Prevents two agents from invisibly editing the same shared surface.','Ownership control',5,.86],
-    ['comms','Comms','coordination','Coordination layer','Moves assignments, evidence, corrections and handoffs between agents.','Coordination bus',5,.9],
-    ['execution','Implementation','execution','Execution layer','Converts the selected plan into real edits, code or artifacts.','Artifact change',6,1.2],
-    ['tools','Tools & Runtime','execution','Capability layer','Provides repository, runtime, build and external-tool access.','External capability',5,1.0],
-    ['tests','Tests & Checks','verification','Verification layer','Challenges the implementation with targeted checks and builds.','Local verification',7,1.12],
-    ['artifact','Authoritative Artifact','verification','Output layer','Checks the actual deployed or authoritative artifact rather than trusting source intent.','Ground truth',8,1.3],
-    ['correction','Corrections','verification','Feedback layer','Feeds disproved assumptions back into the organisation instead of silently forgetting them.','Error recovery',9,.92],
-    ['handoff','Handoff','coordination','Continuity layer','Packages evidence, state and risk so another agent can continue cleanly.','Continuity transfer',9,.9],
-    ['memory','Durable Memory','memory','Memory layer','Stores accepted decisions, corrections and handoffs for future work.','Long-term continuity',10,1.18]
+    ['brief','Brief','reasoning','Input','Turns the customer outcome into a bounded objective signal.','Problem framing'],
+    ['context','Project Context','memory','Memory','Carries accepted project history into the current problem.','Inherited context'],
+    ['plans','Independent Plans','reasoning','Reasoning','Creates competing approaches before convergence.','Parallel reasoning'],
+    ['review','Decision Review','reasoning','Reasoning','Challenges candidate plans and selects an authoritative path.','Decision convergence'],
+    ['routing','Specialist Routing','coordination','Routing','Matches work to the agent or department best suited to perform it.','Capability routing'],
+    ['claims','Claims','coordination','Control','Prevents invisible collisions on shared work surfaces.','Ownership control'],
+    ['comms','Comms','coordination','Coordination','Moves assignments, evidence, corrections and handoffs between agents.','Coordination bus'],
+    ['execution','Implementation','execution','Execution','Turns the chosen plan into real edits, code or artifacts.','Artifact change'],
+    ['tools','Tools & Runtime','execution','Capability','Connects agents to repositories, builds, APIs and project runtime.','External capability'],
+    ['tests','Tests & Checks','verification','Verification','Challenges implementation before completion can be claimed.','Local verification'],
+    ['artifact','Authoritative Artifact','verification','Output','The real deployed or authoritative artifact decides whether work succeeded.','Ground truth'],
+    ['correction','Corrections','verification','Feedback','Feeds disproved assumptions back into future decisions.','Error recovery'],
+    ['handoff','Handoff','coordination','Continuity','Packages evidence, state and risk for the next agent.','Continuity transfer'],
+    ['memory','Durable Memory','memory','Memory','Preserves accepted decisions, corrections and handoffs beyond one session.','Long-term continuity']
   ];
-  const nodes=defs.map(([id,label,layer,kind,desc,agent,order,gain])=>({id,label,layer,kind,desc,agent,order,gain,r:id==='artifact'||id==='memory'?24:19,x:0,y:0,act:id==='brief'?1:.05,next:.05,bias:id==='brief'?2.6:-1.55}));
+  const nodes=defs.map(([id,label,layer,kind,desc,agent])=>({id,label,layer,kind,desc,agent,x:0,y:0,r:(id==='artifact'||id==='memory')?22:18,act:id==='brief'?1:.04,targetX:0,targetY:0}));
   const by=id=>nodes.find(n=>n.id===id);
 
-  const canonical=[['brief','plans'],['context','plans'],['plans','review'],['review','routing'],['routing','claims'],['routing','comms'],['claims','execution'],['tools','execution'],['execution','tests'],['tests','artifact'],['artifact','correction'],['artifact','handoff'],['correction','memory'],['handoff','memory'],['memory','context'],['handoff','comms'],['comms','claims'],['context','routing']];
-  const canonicalSet=new Set(canonical.map(([a,b])=>a+'>'+b));
-  const compatibility={reasoning:{reasoning:1,memory:.92,coordination:.84,execution:.38,verification:.5},memory:{reasoning:.95,memory:.65,coordination:.78,execution:.3,verification:.82},coordination:{reasoning:.72,memory:.7,coordination:.62,execution:.96,verification:.76},execution:{reasoning:.28,memory:.25,coordination:.82,execution:.62,verification:1},verification:{reasoning:.45,memory:.92,coordination:.72,execution:.9,verification:.72}};
+  const relations=[
+    ['brief','plans','reason',112,'Goal definition enters planning'],
+    ['context','plans','reason',116,'Planning inherits project history'],
+    ['plans','review','reason',120,'Competing plans reach decision review'],
+    ['review','routing','reason',114,'Chosen direction reaches specialist routing'],
+    ['routing','claims','speed',105,'Ownership is assigned before editing'],
+    ['routing','comms','speed',112,'Assignments propagate through Comms'],
+    ['claims','execution','speed',108,'Claimed work reaches implementation'],
+    ['tools','execution','speed',100,'Agents can act on the real environment'],
+    ['execution','tests','verify',105,'Implementation receives immediate challenge'],
+    ['tests','artifact','verify',112,'Checks resolve against the authoritative artifact'],
+    ['artifact','correction','verify',112,'Runtime evidence creates corrections'],
+    ['artifact','handoff','verify',118,'Completion evidence is packaged for handoff'],
+    ['correction','memory','memory',108,'Failures become durable lessons'],
+    ['handoff','memory','memory',110,'Handoff becomes future context'],
+    ['memory','context','memory',115,'Durable memory feeds project context'],
+    ['handoff','comms','memory',120,'State reaches the next agent through Comms'],
+    ['comms','claims','speed',110,'Team state constrains ownership'],
+    ['context','routing','reason',128,'Routing uses historical project knowledge']
+  ].map(([a,b,metric,ideal,why])=>({a:by(a),b:by(b),metric,ideal,why,key:a+'>'+b}));
 
-  const initial={brief:[-315,-165],context:[-340,40],plans:[-150,-185],review:[25,-170],routing:[165,-112],claims:[285,-42],comms:[245,82],execution:[290,182],tools:[105,210],tests:[145,302],artifact:[-20,322],correction:[-185,300],handoff:[-295,215],memory:[-350,130]};
-  const challenges=[
-    {name:'Urgent hotfix',brief:'A production regression is costing customers. Restore function quickly, but do not ship without proof.',targets:{speed:74,verify:68,memory:42,reason:46},weights:{speed:1.35,verify:1.2,memory:.55,reason:.6},tip:'Shorten Routing → Implementation → Tests → Artifact without cutting the verification loop.'},
-    {name:'Novel research problem',brief:'The team has never solved this class of problem before. Preserve independent thought and use history without anchoring too hard.',targets:{reason:78,memory:62,verify:52,speed:38},weights:{reason:1.4,memory:1.1,verify:.65,speed:.4},tip:'Couple Context to planning, but keep Independent Plans with enough space to stay genuinely independent.'},
-    {name:'High assurance release',brief:'The change touches critical infrastructure. Confidence and recoverability matter more than raw throughput.',targets:{verify:84,memory:72,reason:58,speed:34},weights:{verify:1.5,memory:1.15,reason:.7,speed:.25},tip:'Build a tight execution → testing → artifact → correction → memory loop.'},
-    {name:'Parallel feature build',brief:'Several specialists need to work at once on shared surfaces without stepping on each other.',targets:{speed:66,reason:52,verify:58,memory:48},weights:{speed:1.05,reason:.7,verify:.75,memory:.65},extra:m=>m.collision<22,tip:'Keep Routing, Claims, Comms and Implementation strongly coupled. Low collision risk is mandatory.'},
-    {name:'Long-lived project handoff',brief:'A project will change hands repeatedly. Future agents must inherit decisions, evidence and corrections intact.',targets:{memory:86,verify:64,reason:54,speed:34},weights:{memory:1.55,verify:.8,reason:.6,speed:.25},tip:'Strengthen Artifact → Handoff → Durable Memory → Project Context while keeping correction attached.'}
-  ];
-  let challengeIndex=0;
+  // The important gameplay rule: closer is not always better. Each relationship has an ideal band.
+  // Too far means weak context. Too close means over-coupling, bottlenecks and groupthink.
+  const linkScore=e=>{const d=Math.hypot(e.a.x-e.b.x,e.a.y-e.b.y),sigma=32;return Math.exp(-((d-e.ideal)*(d-e.ideal))/(2*sigma*sigma));};
+  const crowdPenalty=n=>{let p=0;for(const o of nodes){if(o===n)continue;const d=Math.hypot(n.x-o.x,n.y-o.y);if(d<60)p+=((60-d)/60);}return clamp(p,0,1)};
+  const allScores=()=>relations.map(e=>({...e,score:linkScore(e)}));
 
-  const controls=document.querySelector('.profile-controls');
-  if(controls)controls.innerHTML=`<div class="puzzle-brief"><span>NEURAL PUZZLE</span><strong id="puzzleName"></strong><p id="puzzleBrief"></p></div><div class="puzzle-actions"><button id="newPuzzle" type="button">New puzzle</button><button id="shuffleNet" type="button">Scramble network</button></div>`;
-  const metricsBox=document.querySelector('.lab-metrics');
-  if(metricsBox)metricsBox.insertAdjacentHTML('beforebegin',`<div class="puzzle-status"><div><span>Objective fit</span><strong id="puzzleScore">0</strong><small>/100</small></div><div class="puzzle-goals" id="puzzleGoals"></div><div class="solve-state" id="solveState">Rewire the network</div></div>`);
-  const puzzleName=document.getElementById('puzzleName'),puzzleBrief=document.getElementById('puzzleBrief'),puzzleScore=document.getElementById('puzzleScore'),puzzleGoals=document.getElementById('puzzleGoals'),solveState=document.getElementById('solveState');
-  document.getElementById('newPuzzle')?.addEventListener('click',()=>{challengeIndex=(challengeIndex+1)%challenges.length;loadChallenge();});
-  document.getElementById('shuffleNet')?.addEventListener('click',()=>scramble());
+  // A hand-designed solvable topology. The user is not shown these coordinates, only magnetic behavior.
+  const solution={
+    brief:[-315,-175],context:[-325,10],plans:[-205,-120],review:[-82,-155],routing:[35,-110],claims:[145,-95],comms:[135,20],execution:[235,-30],tools:[230,78],tests:[225,185],artifact:[112,215],correction:[5,245],handoff:[-5,145],memory:[-115,205]
+  };
+  const start={
+    brief:[-315,-175],context:[-340,80],plans:[-170,-210],review:[20,-205],routing:[185,-120],claims:[310,-65],comms:[270,70],execution:[310,190],tools:[95,235],tests:[155,320],artifact:[-25,330],correction:[-205,310],handoff:[-320,220],memory:[-355,145]
+  };
+  nodes.forEach(n=>{const p=start[n.id];n.x=p[0];n.y=p[1]});
 
-  let w=0,h=0,dpr=1,scale=1,tx=0,ty=0,drag=false,dragNode=null,lastX=0,lastY=0,hover=null,active=by('brief'),flow=!reduce,particles=[],shockwaves=[],sparks=[],edgeState=new Set(),solveHold=0,solved=false,lastMetrics=null;
-  const pairKey=(a,b)=>a.id+'>'+b.id;
-  const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  if(metricsBox){metricsBox.insertAdjacentHTML('beforebegin',`<div class="neural-objective"><div><span>OBJECTIVE</span><strong>Synchronise the Hive-Mind</strong><p>Every axis must reach 100%. Nodes want the right partners at the right distance. Overlap them and the network collapses.</p></div><div class="neural-unlock" id="neuralUnlock"><small>LOCKED OUTPUT</small><b>••••••••••</b></div></div><div class="neural-feedback" id="neuralFeedback"><span id="neuralHint">Drag a node. Compatible pathways will magnetise and wire themselves.</span><strong id="neuralProgress">0%</strong></div>`)}
+  const unlock=document.getElementById('neuralUnlock'),hint=document.getElementById('neuralHint'),progress=document.getElementById('neuralProgress');
+  const metricEls={reason:[document.getElementById('metricReason'),document.getElementById('metricReasonVal')],speed:[document.getElementById('metricSpeed'),document.getElementById('metricSpeedVal')],verify:[document.getElementById('metricVerify'),document.getElementById('metricVerifyVal')],memory:[document.getElementById('metricMemory'),document.getElementById('metricMemoryVal')]};
+
+  let w=0,h=0,dpr=1,scale=1,tx=0,ty=0,drag=false,dragNode=null,lastX=0,lastY=0,hover=null,active=by('brief'),particles=[],rings=[],beams=[],wired=new Set(),solved=false,hold=0,lastMetric={reason:0,speed:0,verify:0,memory:0};
   const screen=n=>({x:n.x*scale+tx,y:n.y*scale+ty,r:n.r*scale});
+  function resize(){const r=stage.getBoundingClientRect();w=r.width;h=r.height;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);tx=w/2;ty=h/2;scale=Math.min(1,Math.max(.64,w/760));}
+  function hit(x,y){for(let i=nodes.length-1;i>=0;i--){const n=nodes[i],s=screen(n);if(Math.hypot(x-s.x,y-s.y)<=s.r+10)return n}return null}
+  function burst(x,y,color,count=24,power=3.4){for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,s=.6+Math.random()*power;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:.7+Math.random()*1.8,color})}}
+  function wireFx(e){const a=screen(e.a),b=screen(e.b),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;rings.push({x:mx,y:my,r:4,life:1,color:colors[e.a.layer]});beams.push({a:e.a,b:e.b,life:1});burst(mx,my,colors[e.b.layer],34,4.8)}
+  function unwireFx(e){const a=screen(e.a),b=screen(e.b);burst((a.x+b.x)/2,(a.y+b.y)/2,'#ff8fa8',12,2.2)}
 
-  function allowedDirection(a,b){if(a.id==='memory'&&b.id==='context')return true;if(a.id==='artifact'&&(b.id==='correction'||b.id==='handoff'))return true;if((a.id==='correction'||a.id==='handoff')&&b.id==='memory')return true;if(a.id==='handoff'&&b.id==='comms')return true;return a.order<b.order||(a.order===b.order&&canonicalSet.has(pairKey(a,b)));}
-  function edgeWeight(a,b){if(!allowedDirection(a,b))return 0;const proximity=clamp(1-distance(a,b)/300,0,1),compat=compatibility[a.layer]?.[b.layer]||.25,boost=canonicalSet.has(pairKey(a,b))?1.18:1;return clamp(proximity*compat*boost,0,1);}
-  function buildEdges(){const edges=[];for(const a of nodes)for(const b of nodes){if(a===b)continue;const wt=edgeWeight(a,b);if(wt>.18)edges.push({a,b,w:wt,canonical:canonicalSet.has(pairKey(a,b))});}return edges;}
-  function runNetwork(edges){const incoming=new Map(nodes.map(n=>[n,[]]));edges.forEach(e=>incoming.get(e.b).push(e));for(const n of nodes){if(n.id==='brief'){n.next=1;continue;}let sum=n.bias;for(const e of incoming.get(n))sum+=e.a.act*e.w*2.25;if(n.layer==='memory')sum+=n.act*.55;n.next=sigmoid(sum*n.gain);}for(const n of nodes)n.act=n.act*.76+n.next*.24;}
-  const coupling=(a,b)=>edgeWeight(by(a),by(b));
-  function metrics(){const reason=(coupling('brief','plans')*.22+coupling('context','plans')*.26+coupling('plans','review')*.3+coupling('review','routing')*.22)*100;const speed=(coupling('routing','claims')*.13+coupling('claims','execution')*.18+coupling('tools','execution')*.22+coupling('execution','tests')*.24+by('execution').act*.23)*100;const verify=(coupling('execution','tests')*.26+coupling('tests','artifact')*.34+coupling('artifact','correction')*.18+by('artifact').act*.22)*100;const memory=(coupling('correction','memory')*.22+coupling('handoff','memory')*.28+coupling('memory','context')*.3+by('memory').act*.2)*100;const coordination=(coupling('routing','claims')*.25+coupling('routing','comms')*.24+coupling('comms','claims')*.28+coupling('handoff','comms')*.23)*100;const collision=clamp(62-coordination*.55-coupling('claims','execution')*38,0,100);return{reason:Math.round(reason),speed:Math.round(speed),verify:Math.round(verify),memory:Math.round(memory),coordination:Math.round(coordination),collision:Math.round(collision),output:Math.round((by('artifact').act*.7+by('memory').act*.3)*100)};}
-  function score(m){const ch=challenges[challengeIndex];let total=0,den=0;for(const k of ['reason','speed','verify','memory']){const weight=ch.weights[k]||1;den+=weight;total+=weight*clamp(m[k]/ch.targets[k],0,1);}if(ch.extra&&!ch.extra(m))total*=.72;return Math.round(total/den*100);}
-  function updateGoals(m){if(!puzzleGoals)return;const ch=challenges[challengeIndex];puzzleGoals.innerHTML=['reason','speed','verify','memory'].map(k=>`<span class="${m[k]>=ch.targets[k]?'met':''}"><b>${{reason:'Reason',speed:'Speed',verify:'Verify',memory:'Memory'}[k]}</b>${m[k]} / ${ch.targets[k]}</span>`).join('')+(ch.extra?`<span class="${ch.extra(m)?'met':''}"><b>Collision</b>${m.collision} / &lt;22</span>`:'');}
-  function updateMetrics(){const m=metrics();lastMetrics=m;for(const k of ['reason','speed','verify','memory']){const [bar,val]=metricEls[k]||[];if(bar)bar.style.width=clamp(m[k],0,100)+'%';if(val)val.textContent=m[k];}const s=score(m);if(puzzleScore)puzzleScore.textContent=s;const ch=challenges[challengeIndex],pass=['reason','speed','verify','memory'].every(k=>m[k]>=ch.targets[k])&&(!ch.extra||ch.extra(m));if(pass){solveHold+=1/60;if(solveState)solveState.textContent=`Hold configuration ${Math.max(0,1.4-solveHold).toFixed(1)}s`;if(solveHold>1.4&&!solved)completePuzzle();}else{solveHold=0;if(solveState)solveState.textContent=s>85?'Almost there':'Rewire the network';}if(profileName)profileName.textContent=s>=95?'Elegant solution':s>=80?'Strong architecture':s>=60?'Promising architecture':'Unstable architecture';updateGoals(m);}
-  function loadChallenge(){solved=false;solveHold=0;if(solveState)solveState.classList.remove('solved');const ch=challenges[challengeIndex];if(puzzleName)puzzleName.textContent=ch.name;if(puzzleBrief)puzzleBrief.textContent=ch.brief;if(solveState)solveState.textContent='Rewire the network';if(translation)translation.textContent=ch.tip;updateMetrics();}
-  function setInitial(){nodes.forEach(n=>{const p=initial[n.id];n.x=p[0];n.y=p[1];n.act=n.id==='brief'?1:.05;n.next=n.act;});edgeState=new Set();particles=[];shockwaves=[];sparks=[];solved=false;solveHold=0;}
-  function scramble(){solved=false;solveHold=0;nodes.forEach(n=>{if(n.id==='brief')return;n.x=-350+Math.random()*700;n.y=-230+Math.random()*540;n.act=.05;});burst(w*.52,h*.48,40,'#f39bc8');if(translation)translation.textContent='The architecture has been scrambled. Rebuild a topology that satisfies the puzzle objectives.';}
-  function burst(x,y,count,color){for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*4;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:.8+Math.random()*2,color});}}
-  function wireFx(a,b){const sa=screen(a),sb=screen(b),mx=(sa.x+sb.x)/2,my=(sa.y+sb.y)/2;shockwaves.push({x:mx,y:my,r:3,life:1,color:colors[a.layer]});burst(mx,my,18,colors[b.layer]);for(let i=0;i<7;i++)sparks.push({a,b,t:Math.random()*.2,life:1,speed:.018+Math.random()*.018});}
-  function completePuzzle(){solved=true;if(solveState){solveState.textContent='Puzzle solved';solveState.classList.add('solved');}burst(w*.5,h*.5,110,'#ffffff');for(const n of nodes){const s=screen(n);shockwaves.push({x:s.x,y:s.y,r:2,life:1,color:colors[n.layer]});}if(translation)translation.textContent=`Solved. ${challenges[challengeIndex].name} now satisfies every constraint. There is no single required layout: the puzzle is about building the right information flow and trade-offs.`;}
-  function nearest(n){return nodes.filter(x=>x!==n).map(x=>[x,distance(n,x),edgeWeight(n,x),edgeWeight(x,n)]).sort((a,b)=>a[1]-b[1]).slice(0,4);}
-  function explain(n){const near=nearest(n),strong=near.filter(x=>Math.max(x[2],x[3])>.36);let text;if(strong.length){const[o,,outW,inW]=strong[0];text=outW>inW?`${n.label} now strongly feeds ${o.label}. For the agents, ${n.agent.toLowerCase()} becomes an earlier and stronger influence on ${o.agent.toLowerCase()}.`:`${n.label} is now strongly driven by ${o.label}. For the agents, ${n.agent.toLowerCase()} becomes more dependent on ${o.agent.toLowerCase()}.`;if(strong[1])text+=` ${strong[1][0].label} is also close enough to form a secondary pathway, creating a multi-input decision rather than a simple chain.`;}else text=`${n.label} is isolated. ${n.agent} now has more autonomy, but less information reaches it and less of its output shapes the rest of the company.`;const m=lastMetrics||metrics(),ch=challenges[challengeIndex],weakest=['reason','speed','verify','memory'].sort((a,b)=>(m[a]/ch.targets[a])-(m[b]/ch.targets[b]))[0];text+=` For this puzzle, the biggest remaining pressure is ${{reason:'reasoning depth',speed:'execution velocity',verify:'verification rigor',memory:'memory continuity'}[weakest]}.`;if(translation)translation.textContent=text;}
-  function setDetail(n){active=n;const near=nearest(n),strong=near[0];if(detail)detail.innerHTML=`<div class="node-class">${n.kind}</div><h4>${n.label}</h4><p>${n.desc}</p><ul><li><span>Agent meaning</span><b>${n.agent}</b></li><li><span>Activation</span><b>${Math.round(n.act*100)}%</b></li><li><span>Closest function</span><b>${strong[0].label}</b></li><li><span>Coupling</span><b>${Math.round(Math.max(strong[2],strong[3])*100)}%</b></li></ul>`;explain(n);}
-  function resize(){const r=stage.getBoundingClientRect();w=r.width;h=r.height;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);tx=w/2;ty=h/2;scale=Math.min(1,Math.max(.62,w/780));}
-  function hit(x,y){for(let i=nodes.length-1;i>=0;i--){const n=nodes[i],s=screen(n);if(Math.hypot(x-s.x,y-s.y)<s.r+10)return n;}return null;}
-  function drawGrid(){ctx.save();ctx.strokeStyle='rgba(255,255,255,.022)';ctx.lineWidth=.5;const step=28;for(let x=((tx%step)+step)%step;x<w;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(let y=((ty%step)+step)%step;y<h;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}ctx.restore();}
-  function edgeCurve(a,b,t){const sa=screen(a),sb=screen(b),mx=(sa.x+sb.x)/2,q=1-t;return{x:q*q*q*sa.x+3*q*q*t*mx+3*q*t*t*mx+t*t*t*sb.x,y:q*q*q*sa.y+3*q*q*t*sa.y+3*q*t*t*sb.y+t*t*t*sb.y};}
-  function draw(now){ctx.clearRect(0,0,w,h);drawGrid();const edges=buildEdges();runNetwork(edges);const current=new Set(edges.filter(e=>e.w>.43).map(e=>pairKey(e.a,e.b)));for(const k of current)if(!edgeState.has(k)){const[a,b]=k.split('>');wireFx(by(a),by(b));}edgeState=current;edges.forEach((e,i)=>{const a=screen(e.a),b=screen(e.b),mx=(a.x+b.x)/2,sel=e.a===active||e.b===active;ctx.save();ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.bezierCurveTo(mx,a.y,mx,b.y,b.x,b.y);const grad=ctx.createLinearGradient(a.x,a.y,b.x,b.y);grad.addColorStop(0,colors[e.a.layer]+'66');grad.addColorStop(1,colors[e.b.layer]+'66');ctx.strokeStyle=sel?grad:`rgba(255,255,255,${.025+e.w*.17})`;ctx.lineWidth=sel?1.7:.5+e.w*1.4;ctx.shadowBlur=sel?12:0;ctx.shadowColor=colors[e.a.layer];ctx.stroke();ctx.restore();if(flow&&e.w>.28){const t=((now/1250)+i*.071)%1,p=edgeCurve(e.a,e.b,t);ctx.beginPath();ctx.arc(p.x,p.y,sel?2.6:1.4,0,Math.PI*2);ctx.fillStyle=colors[e.a.layer];ctx.shadowBlur=10;ctx.shadowColor=colors[e.a.layer];ctx.fill();ctx.shadowBlur=0;}});for(const sp of sparks){sp.t+=sp.speed;sp.life-=.018;if(sp.t>1)sp.t=0;const p=edgeCurve(sp.a,sp.b,sp.t);ctx.beginPath();ctx.arc(p.x,p.y,1.8,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${sp.life})`;ctx.fill();}sparks=sparks.filter(s=>s.life>0);for(const s of shockwaves){ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.strokeStyle=s.color+Math.floor(clamp(s.life,0,1)*255).toString(16).padStart(2,'0');ctx.lineWidth=1.2;ctx.stroke();s.r+=3.4;s.life-=.045;}shockwaves=shockwaves.filter(s=>s.life>0);for(const p of particles){ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.color+Math.floor(clamp(p.life,0,1)*255).toString(16).padStart(2,'0');ctx.fill();p.x+=p.vx;p.y+=p.vy;p.vx*=.97;p.vy*=.97;p.life-=.025;}particles=particles.filter(p=>p.life>0);nodes.forEach(n=>{const s=screen(n),isA=n===active,isH=n===hover,act=n.act;ctx.save();ctx.shadowBlur=10+act*32;ctx.shadowColor=colors[n.layer];const rg=ctx.createRadialGradient(s.x-s.r*.28,s.y-s.r*.32,1,s.x,s.y,s.r*1.2);rg.addColorStop(0,`rgba(255,255,255,${.08+act*.12})`);rg.addColorStop(.35,colors[n.layer]+Math.floor((.12+act*.18)*255).toString(16).padStart(2,'0'));rg.addColorStop(1,'rgba(7,7,12,.98)');ctx.beginPath();ctx.arc(s.x,s.y,s.r+(isA?3:0),0,Math.PI*2);ctx.fillStyle=rg;ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle=isA?colors[n.layer]:isH?'rgba(255,255,255,.38)':'rgba(255,255,255,.15)';ctx.lineWidth=isA?1.8:1;ctx.stroke();ctx.beginPath();ctx.arc(s.x,s.y,2.6+act*2.4,0,Math.PI*2);ctx.fillStyle=colors[n.layer];ctx.fill();ctx.font=`600 ${Math.max(8,9.2*scale)}px Inter,system-ui`;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle=isA?'#fff':'#aaa3ae';ctx.fillText(n.label,s.x,s.y+s.r+7);ctx.restore();});updateMetrics();if(active&&detail&&Math.random()<.06)setDetail(active);requestAnimationFrame(draw);}
-  stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);lastX=e.offsetX;lastY=e.offsetY;dragNode=hit(lastX,lastY);drag=true;stage.classList.add('dragging');if(dragNode){setDetail(dragNode);const s=screen(dragNode);shockwaves.push({x:s.x,y:s.y,r:4,life:.8,color:colors[dragNode.layer]});}});
-  stage.addEventListener('pointermove',e=>{const x=e.offsetX,y=e.offsetY;hover=hit(x,y);if(!drag)return;const dx=x-lastX,dy=y-lastY;lastX=x;lastY=y;if(dragNode){dragNode.x+=dx/scale;dragNode.y+=dy/scale;setDetail(dragNode);}else{tx+=dx;ty+=dy;}});
-  const end=()=>{if(dragNode){const s=screen(dragNode);burst(s.x,s.y,10,colors[dragNode.layer]);setDetail(dragNode);}drag=false;dragNode=null;stage.classList.remove('dragging');};stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
-  stage.addEventListener('wheel',e=>{e.preventDefault();const old=scale,f=Math.exp(-e.deltaY*.0012);scale=clamp(scale*f,.42,2.2);const wx=(e.offsetX-tx)/old,wy=(e.offsetY-ty)/old;tx=e.offsetX-wx*scale;ty=e.offsetY-wy*scale;},{passive:false});
-  resetBtn?.addEventListener('click',()=>{setInitial();tx=w/2;ty=h/2;scale=Math.min(1,Math.max(.62,w/780));setDetail(by('brief'));loadChallenge();});
-  pulseBtn?.addEventListener('click',()=>{flow=!flow;pulseBtn.textContent=flow?'Pause flow':'Resume flow';});
-  setInitial();resize();addEventListener('resize',resize,{passive:true});setDetail(active);loadChallenge();requestAnimationFrame(draw);
+  function category(metric){const arr=allScores().filter(e=>e.metric===metric);const min=Math.min(...arr.map(e=>e.score));const avg=arr.reduce((s,e)=>s+e.score,0)/arr.length;const crowd=nodes.reduce((s,n)=>s+crowdPenalty(n),0)/nodes.length;return clamp((min*.72+avg*.28-crowd*.55)*100,0,100)}
+  function metrics(){return{reason:Math.round(category('reason')),speed:Math.round(category('speed')),verify:Math.round(category('verify')),memory:Math.round(category('memory'))}}
+  function updateWires(){for(const e of relations){const s=linkScore(e),on=s>.72;if(on&&!wired.has(e.key)){wired.add(e.key);wireFx(e)}else if(!on&&wired.has(e.key)){wired.delete(e.key);unwireFx(e)}}}
+  function closestRelation(n){return relations.filter(e=>e.a===n||e.b===n).map(e=>({e,score:linkScore(e),d:Math.hypot(e.a.x-e.b.x,e.a.y-e.b.y)})).sort((a,b)=>b.score-a.score)[0]}
+  function explain(n){const c=closestRelation(n),crowd=crowdPenalty(n);if(crowd>.18){hint.textContent=`${n.label} is over-coupled. Real agents would lose independence, create contention and amplify the same context. Separate the cluster.`;return}if(!c){hint.textContent='Move a node to discover a compatible pathway.';return}const delta=c.d-c.e.ideal;if(c.score>.93)hint.textContent=`Excellent: ${c.e.why}. In KHAI, this means ${n.agent.toLowerCase()} is strongly connected without becoming a bottleneck.`;else if(delta>0)hint.textContent=`${n.label} is too isolated from ${c.e.a===n?c.e.b.label:c.e.a.label}. Bring them closer to strengthen ${c.e.why.toLowerCase()}.`;else hint.textContent=`${n.label} is too tightly coupled to ${c.e.a===n?c.e.b.label:c.e.a.label}. Give them breathing room. KHAI preserves separation so agents do not collapse into groupthink.`}
+  function setDetail(n){active=n;const c=closestRelation(n);if(detail)detail.innerHTML=`<div class="node-class">${n.layer}</div><h4>${n.label}</h4><p>${n.desc}</p><ul><li><span>Agent translation</span><b>${n.agent}</b></li><li><span>Best pathway</span><b>${c?(c.e.a===n?c.e.b.label:c.e.a.label):'None'}</b></li><li><span>Coupling quality</span><b>${c?Math.round(c.score*100):0}%</b></li></ul>`;explain(n)}
+  function updateMetrics(){const m=metrics();lastMetric=m;for(const k of Object.keys(m)){const [bar,val]=metricEls[k]||[];if(bar)bar.style.width=m[k]+'%';if(val)val.textContent=m[k]}const overall=Math.min(m.reason,m.speed,m.verify,m.memory);if(progress)progress.textContent=overall+'%';if(profileName)profileName.textContent=overall===100?'Perfectly synchronised':overall>88?'Near convergence':overall>60?'Coherent network':'Fragmented organisation';const done=Object.values(m).every(v=>v===100);if(done){hold+=1/60;if(hint)hint.textContent=`Perfect architecture. Hold the network stable ${Math.max(0,1.2-hold).toFixed(1)}s…`;if(hold>1.2&&!solved)solve()}else hold=0}
+  function solve(){solved=true;document.querySelector('.hero-cognition')?.classList.add('neural-solved');if(unlock){unlock.classList.add('unlocked');unlock.innerHTML='<small>UNLOCKED CODE</small><b>wildrabbet</b>'}if(hint)hint.textContent='100% across every axis. The network is balanced, specialised, verifiable and continuous.';for(const n of nodes){const s=screen(n);rings.push({x:s.x,y:s.y,r:2,life:1.4,color:colors[n.layer]});burst(s.x,s.y,colors[n.layer],28,4.2)}for(const e of relations)beams.push({a:e.a,b:e.b,life:1.6})}
+
+  function repel(){for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const a=nodes[i],b=nodes[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,min=54;if(d<min){const f=(min-d)*.16,ux=dx/d,uy=dy/d;if(a!==dragNode){a.x-=ux*f;a.y-=uy*f}if(b!==dragNode){b.x+=ux*f;b.y+=uy*f}}}}
+  function magnetise(n){let best=null;for(const e of relations){if(e.a!==n&&e.b!==n)continue;const o=e.a===n?e.b:e.a,d=Math.hypot(n.x-o.x,n.y-o.y),err=Math.abs(d-e.ideal);if(err<22&&(!best||err<best.err))best={e,o,d,err}}if(best){const dx=n.x-best.o.x,dy=n.y-best.o.y,d=Math.hypot(dx,dy)||1,snap=.18;n.x+=(best.o.x+dx/d*best.e.ideal-n.x)*snap;n.y+=(best.o.y+dy/d*best.e.ideal-n.y)*snap}}
+  function networkActivation(){const scores=allScores();for(const n of nodes){if(n.id==='brief'){n.act=1;continue}const incoming=scores.filter(e=>e.b===n);let sum=-1.8;for(const e of incoming)sum+=e.a.act*e.score*2.2;if(n.id==='memory')sum+=n.act*.5;n.act=n.act*.8+sigmoid(sum)*.2}}
+
+  stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);lastX=e.offsetX;lastY=e.offsetY;dragNode=hit(lastX,lastY);drag=true;stage.classList.add('dragging');if(dragNode)setDetail(dragNode)});
+  stage.addEventListener('pointermove',e=>{const x=e.offsetX,y=e.offsetY;hover=hit(x,y);if(!drag)return;const dx=(x-lastX)/scale,dy=(y-lastY)/scale;lastX=x;lastY=y;if(dragNode){dragNode.x+=dx;dragNode.y+=dy;magnetise(dragNode);setDetail(dragNode)}else{tx+=dx*scale;ty+=dy*scale}});
+  const end=()=>{drag=false;dragNode=null;stage.classList.remove('dragging')};stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
+  stage.addEventListener('wheel',e=>{e.preventDefault();const old=scale,fac=Math.exp(-e.deltaY*.001);scale=clamp(scale*fac,.55,1.7);const wx=(e.offsetX-tx)/old,wy=(e.offsetY-ty)/old;tx=e.offsetX-wx*scale;ty=e.offsetY-wy*scale},{passive:false});
+
+  function draw(t){repel();networkActivation();updateWires();updateMetrics();ctx.clearRect(0,0,w,h);const scores=allScores();
+    // subtle potential fields show where the player can form a useful connection
+    if(dragNode){for(const e of relations){if(e.a!==dragNode&&e.b!==dragNode)continue;const o=e.a===dragNode?e.b:e.a,s=screen(o),rad=e.ideal*scale;ctx.beginPath();ctx.arc(s.x,s.y,rad,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.045)';ctx.setLineDash([3,8]);ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([])}}
+    for(const e of scores){const a=screen(e.a),b=screen(e.b),s=e.score,mx=(a.x+b.x)/2;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.bezierCurveTo(mx,a.y,mx,b.y,b.x,b.y);ctx.strokeStyle=s>.72?`rgba(255,255,255,${.1+s*.33})`:`rgba(255,255,255,${.018+s*.07})`;ctx.lineWidth=s>.9?1.8:s>.72?1.2:.65;ctx.shadowBlur=s>.92?12:0;ctx.shadowColor=colors[e.a.layer];ctx.stroke();ctx.shadowBlur=0;if(s>.72&&!reduce){const p=((t/900)+relations.indexOf(e)*.067)%1,q=1-p,px=q*q*q*a.x+3*q*q*p*mx+3*q*p*p*mx+p*p*p*b.x,py=q*q*q*a.y+3*q*q*p*a.y+3*q*p*p*b.y+p*p*p*b.y;ctx.beginPath();ctx.arc(px,py,1.1+s*1.6,0,Math.PI*2);ctx.fillStyle=colors[e.a.layer];ctx.shadowBlur=14;ctx.shadowColor=colors[e.a.layer];ctx.fill();ctx.shadowBlur=0}}
+    for(const beam of beams){const a=screen(beam.a),b=screen(beam.b);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(255,255,255,${beam.life*.5})`;ctx.lineWidth=1+beam.life*3;ctx.shadowBlur=24;ctx.shadowColor=colors[beam.a.layer];ctx.stroke();ctx.shadowBlur=0;beam.life-=.035}beams=beams.filter(b=>b.life>0);
+    for(const n of nodes){const s=screen(n),isA=n===active,isH=n===hover,c=colors[n.layer],crowd=crowdPenalty(n);ctx.save();ctx.shadowBlur=12+n.act*26;ctx.shadowColor=c;ctx.beginPath();ctx.arc(s.x,s.y,s.r+(isA?2:0),0,Math.PI*2);ctx.fillStyle=crowd>.2?'rgba(35,9,15,.98)':'rgba(8,8,14,.98)';ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle=crowd>.2?'#ff7188':isA?c:`rgba(255,255,255,${.16+n.act*.24})`;ctx.lineWidth=isA?1.8:1;ctx.stroke();ctx.beginPath();ctx.arc(s.x,s.y,3+n.act*2.2,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();ctx.font=`${Math.max(8,9.2*scale)}px Inter,system-ui`;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle=isA?'#fff':'#aaa2af';ctx.fillText(n.label,s.x,s.y+s.r+7);ctx.restore()}
+    for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vx*=.975;p.vy*=.975;p.life-=.025;ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);ctx.fillStyle=p.color;ctx.globalAlpha=clamp(p.life,0,1);ctx.fill();ctx.globalAlpha=1}particles=particles.filter(p=>p.life>0);
+    for(const r of rings){r.r+=5.8;r.life-=.026;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);ctx.strokeStyle=r.color;ctx.globalAlpha=clamp(r.life,0,1);ctx.lineWidth=1.5;ctx.stroke();ctx.globalAlpha=1}rings=rings.filter(r=>r.life>0);
+    requestAnimationFrame(draw)}
+
+  resize();addEventListener('resize',resize,{passive:true});setDetail(active);requestAnimationFrame(draw);
 })();
