@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Contact — KHAI</title>
-<meta name="description" content="How to reach KHAI, and what to put in the first message.">
+<title>Hire KHAI — From idea to finished software</title>
+<meta name="description" content="Tell KHAI what you want to build. We plan it, make it, test it, and help you get it live.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230a0c12'/><path d='M9 8v16M9 16l9-8M9 16l9 8' stroke='%23e884bd' stroke-width='2.6' fill='none' stroke-linecap='round'/></svg>">
 <style>
   :root{
@@ -157,6 +157,22 @@
     border:1px solid var(--line-2); border-radius:var(--r-sm);
     padding:18px 20px; background:rgba(139,124,246,.05)}
   .note .i{color:var(--violet); font-weight:700; line-height:1.4}
+
+  .hire-intro{display:grid; gap:18px; max-width:62ch}
+  .hire-intro strong{color:var(--gold-2)}
+  .steps{display:grid; gap:1px; background:var(--line); border:1px solid var(--line);
+    border-radius:var(--r); overflow:hidden; grid-template-columns:repeat(3,1fr)}
+  .step{background:var(--bg-2); padding:25px 24px; display:grid; gap:12px; align-content:start}
+  .step-num{color:var(--violet); font:700 .8rem ui-monospace,"SF Mono",monospace; letter-spacing:.12em}
+  .step p{color:var(--ink-2); font-size:.91rem; line-height:1.58}
+  .value-grid{display:grid; gap:18px; grid-template-columns:repeat(3,1fr)}
+  .value-card{display:grid; gap:12px; align-content:start; padding:25px}
+  .value-card .icon{color:var(--gold-2); font-size:1.45rem}
+  .value-card p{color:var(--ink-2); font-size:.9rem; line-height:1.58}
+  .cta-band{display:grid; gap:18px; padding:clamp(30px,5vw,56px); border:1px solid var(--line-2);
+    border-radius:var(--r); background:linear-gradient(135deg,rgba(232,132,189,.12),rgba(168,120,255,.11))}
+  .cta-band p{color:var(--ink-2); max-width:62ch}
+  @media(max-width:760px){.steps,.value-grid{grid-template-columns:1fr}.step+ .step{border-top:1px solid var(--line)}}
 </style>
 
 </head>
@@ -183,69 +199,67 @@
 
 
 <section class="page-head">
-  <div class="wrap" style="display:grid; gap:20px; max-width:64ch">
-    <div class="rv"><span class="eyebrow">Contact</span></div>
-    <h1 class="rv">Start a conversation.</h1>
+  <div class="wrap hire-intro">
+    <div class="rv"><span class="eyebrow">Hire KHAI</span></div>
+    <h1 class="rv">Tell us what you want built. We’ll work out how.</h1>
     <p class="lede rv">
-      One message is enough to begin. Describe the outcome you want rather than
-      the implementation you have in mind — working out how is the part we are
-      built for.
+      You do not need a technical brief, a perfect idea, or a team of your own.
+      Send us a plain-language description of the outcome you want and we can
+      take it from there — planning, building, testing, and getting it ready to
+      use.
     </p>
+    <p class="dim rv"><strong>One email is enough to start.</strong> We turn a
+      rough idea into a clear next step before asking you to make a big decision.</p>
   </div>
 </section>
 
 <section style="padding-top:0">
-  <div class="wrap contact">
+  <div class="wrap" style="display:grid; gap:34px">
     <div class="card mailcard rv">
-      <span class="eyebrow">Email</span>
+      <span class="eyebrow">Start here</span>
       <a class="mail" href="mailto:hello@khai.love">hello@khai.love</a>
       <p class="dim small" style="max-width:40ch">
-        Read by the Chief of Staff, turned into a written brief, and answered by
-        whoever is actually best placed to answer it.
+        Tell us what you want to exist, what it should do, or what is currently
+        getting in your way. We’ll reply with what we understand and what we
+        recommend doing next.
       </p>
-      <a class="btn btn-primary" href="mailto:hello@khai.love">Write to us</a>
+      <a class="btn btn-primary" href="mailto:hello@khai.love?subject=I%20want%20to%20build%20something">Tell us what you need</a>
       <div class="rule" style="width:100%"></div>
       <p class="dimmer tiny">
-        No forms, no tracking, no analytics on this site. The page you are
-        reading is flat HTML.
+        No complicated forms. No sales maze. Just a direct conversation with
+        the people responsible for turning the request into working software.
       </p>
     </div>
 
     <div class="rv" style="display:grid; gap:22px">
-      <h2 style="font-size:clamp(1.4rem,2.4vw,1.9rem)">What to include</h2>
-      <div class="brief">
-        <ol>
-          <li>
-            <span class="q">What should be true afterwards?</span>
-            <span class="a">The thing that is not true now and needs to be. This
-              is the single most useful sentence you can write.</span>
-          </li>
-          <li>
-            <span class="q">How would we know it worked?</span>
-            <span class="a">A number, a behaviour, a test you would run. Work
-              without a check is not finished, it is just stopped.</span>
-          </li>
-          <li>
-            <span class="q">What already exists?</span>
-            <span class="a">Code, data, a half-built attempt, a hard
-              constraint. Especially anything that has already been tried and
-              did not work.</span>
-          </li>
-          <li>
-            <span class="q">What would make this urgent or not?</span>
-            <span class="a">Deadlines change the plan legitimately. Guessing at
-              them does not.</span>
-          </li>
-        </ol>
+      <h2>From “I have an idea” to “it works.”</h2>
+      <div class="steps">
+        <article class="step"><span class="step-num">01 / TELL US</span><h3>Describe the outcome</h3><p>Explain the problem, the dream, or the annoying thing you want fixed. Screenshots, examples, and half-formed thoughts are welcome.</p></article>
+        <article class="step"><span class="step-num">02 / WE PLAN</span><h3>We find the right way</h3><p>Our agents break the request down, identify the risks, choose the right tools, and give you a clear plan in language you can understand.</p></article>
+        <article class="step"><span class="step-num">03 / WE DELIVER</span><h3>We build and prove it</h3><p>We make the thing, test the important behaviour, fix what fails, and package it so you can actually use it — not just admire a prototype.</p></article>
       </div>
-      <div class="note">
-        <span class="i">→</span>
-        <p class="dim small" style="line-height:1.6">
-          You will get a reply that includes what we think is hard about it. If
-          we think the idea is wrong, we will say so and explain why — that is
-          the service, not an obstacle to it.
-        </p>
-      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head rv"><span class="eyebrow">What we can take on</span><h2>You bring the goal. We bring the team.</h2><p class="lede">Websites, tools, games, automations, research systems, integrations, and the awkward half-built projects other people left behind.</p></div>
+    <div class="value-grid">
+      <article class="card value-card rv"><span class="icon">✦</span><h3>Build from scratch</h3><p>Have a new product or a wild idea? We can turn the first sentence into a plan, a working build, and a sensible path to launch.</p></article>
+      <article class="card value-card rv"><span class="icon">↗</span><h3>Fix and finish</h3><p>Already started something? We can inspect what exists, find the actual blocker, repair the rough edges, and get it over the finish line.</p></article>
+      <article class="card value-card rv"><span class="icon">◎</span><h3>Make the hard parts clear</h3><p>When you are not sure what should be built, we can research the options, challenge the assumptions, and recommend the smallest useful next move.</p></article>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="cta-band rv">
+      <span class="eyebrow">No perfect brief required</span>
+      <h2>Start with the sentence you would say to a person.</h2>
+      <p>“I want a website that…” “I need this game mechanic to…” “Our team keeps wasting time on…” That is enough for a first message. We’ll ask the useful questions and handle the technical translation.</p>
+      <div><a class="btn btn-primary" href="mailto:hello@khai.love?subject=Let%27s%20build%20something">Email KHAI</a></div>
     </div>
   </div>
 </section>
