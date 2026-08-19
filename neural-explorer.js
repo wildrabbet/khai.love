@@ -1,132 +1,98 @@
 (() => {
-  const canvas=document.getElementById('cognitionGraph'); if(!canvas)return;
-  const stage=canvas.closest('.neural-stage'),ctx=canvas.getContext('2d');
-  const detail=document.getElementById('nodeDetail'),translation=document.getElementById('agentTranslation');
-  const resetBtn=document.getElementById('graphReset'),pulseBtn=document.getElementById('graphPulse');
-  const presetBtns=[...document.querySelectorAll('.profile-btn')],profileName=document.getElementById('profileName');
-  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const metricEls={reason:[document.getElementById('metricReason'),document.getElementById('metricReasonVal')],speed:[document.getElementById('metricSpeed'),document.getElementById('metricSpeedVal')],verify:[document.getElementById('metricVerify'),document.getElementById('metricVerifyVal')],memory:[document.getElementById('metricMemory'),document.getElementById('metricMemoryVal')]};
+  const canvas = document.getElementById('cognitionGraph');
+  if (!canvas) return;
+  const stage = canvas.closest('.neural-stage');
+  const ctx = canvas.getContext('2d');
+  const detail = document.getElementById('nodeDetail');
+  const translation = document.getElementById('agentTranslation');
+  const resetBtn = document.getElementById('graphReset');
+  const pulseBtn = document.getElementById('graphPulse');
+  const profileName = document.getElementById('profileName');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const metricEls = {
+    reason:[document.getElementById('metricReason'),document.getElementById('metricReasonVal')],
+    speed:[document.getElementById('metricSpeed'),document.getElementById('metricSpeedVal')],
+    verify:[document.getElementById('metricVerify'),document.getElementById('metricVerifyVal')],
+    memory:[document.getElementById('metricMemory'),document.getElementById('metricMemoryVal')]
+  };
   const colors={reasoning:'#f39bc8',memory:'#9b7cff',coordination:'#7be8df',execution:'#f0ca8b',verification:'#8ed7ff'};
+  const sigmoid=x=>1/(1+Math.exp(-x));
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
   const defs=[
-    ['brief','Brief','reasoning','Defines the requested outcome, constraints and evidence before implementation begins.','Problem framing'],
-    ['context','Project Context','memory','Carries prior decisions, conventions, discoveries and corrections into the next tranche of work.','Inherited context'],
-    ['plans','Independent Plans','reasoning','Senior agents form complete approaches independently before seeing alternatives.','Parallel reasoning'],
-    ['review','Decision Review','reasoning','Competing approaches are challenged and one implementation path becomes authoritative.','Decision convergence'],
-    ['routing','Specialist Routing','coordination','Work is directed to the role best suited to research, engineering, operations or verification.','Capability routing'],
-    ['claims','Claims','coordination','Shared work surfaces are claimed before editing so parallel agents do not collide invisibly.','Ownership control'],
-    ['comms','Comms','coordination','Assignments, findings, handoffs and proof move between agents through the shared communications layer.','Coordination bus'],
-    ['execution','Implementation','execution','The selected owner changes the bounded work surface using the agreed plan.','Code and artifact change'],
-    ['tools','Tools & Runtime','execution','Repositories, builds, APIs and local tools connect reasoning to the real project environment.','External capability'],
-    ['tests','Tests & Checks','verification','Targeted tests, builds, hashes and inspections challenge the implementation.','Local verification'],
-    ['artifact','Authoritative Artifact','verification','The real running or authoritative artifact decides whether the change actually worked.','Ground truth'],
-    ['correction','Corrections','verification','Disproved claims are superseded visibly and fed back into future decisions.','Error recovery'],
-    ['handoff','Handoff','coordination','Evidence, remaining risks and state are packaged so another agent can continue without reconstruction.','Continuity transfer'],
-    ['memory','Durable Memory','memory','Accepted decisions, handoffs and corrections become organisational knowledge beyond one session.','Long-term continuity']
+    ['brief','Brief','reasoning','Input layer','Turns the customer outcome into a bounded signal: objective, constraints and evidence.','Problem framing',0,1.35],
+    ['context','Project Context','memory','Memory layer','Carries accepted project history into the current problem without rebuilding it from scratch.','Inherited context',1,.92],
+    ['plans','Independent Plans','reasoning','Reasoning layer','Produces multiple candidate approaches before convergence.','Parallel reasoning',2,1.18],
+    ['review','Decision Review','reasoning','Reasoning layer','Compares candidate plans and suppresses weak or conflicting approaches.','Decision convergence',3,1.12],
+    ['routing','Specialist Routing','coordination','Routing layer','Routes the chosen work toward the role most capable of executing it.','Capability routing',4,1.02],
+    ['claims','Claims','coordination','Control layer','Prevents two agents from invisibly editing the same shared surface.','Ownership control',5,.86],
+    ['comms','Comms','coordination','Coordination layer','Moves assignments, evidence, corrections and handoffs between agents.','Coordination bus',5,.9],
+    ['execution','Implementation','execution','Execution layer','Converts the selected plan into real edits, code or artifacts.','Artifact change',6,1.2],
+    ['tools','Tools & Runtime','execution','Capability layer','Provides repository, runtime, build and external-tool access.','External capability',5,1.0],
+    ['tests','Tests & Checks','verification','Verification layer','Challenges the implementation with targeted checks and builds.','Local verification',7,1.12],
+    ['artifact','Authoritative Artifact','verification','Output layer','Checks the actual deployed or authoritative artifact rather than trusting source intent.','Ground truth',8,1.3],
+    ['correction','Corrections','verification','Feedback layer','Feeds disproved assumptions back into the organisation instead of silently forgetting them.','Error recovery',9,.92],
+    ['handoff','Handoff','coordination','Continuity layer','Packages evidence, state and risk so another agent can continue cleanly.','Continuity transfer',9,.9],
+    ['memory','Durable Memory','memory','Memory layer','Stores accepted decisions, corrections and handoffs for future work.','Long-term continuity',10,1.18]
   ];
-  const nodes=defs.map(([id,label,layer,desc,agent],i)=>({id,label,layer,desc,agent,r:id==='artifact'||id==='memory'?24:19,x:0,y:0,vx:0,vy:0}));
+  const nodes=defs.map(([id,label,layer,kind,desc,agent,order,gain])=>({id,label,layer,kind,desc,agent,order,gain,r:id==='artifact'||id==='memory'?24:19,x:0,y:0,act:id==='brief'?1:.05,next:.05,bias:id==='brief'?2.6:-1.55}));
   const by=id=>nodes.find(n=>n.id===id);
-  const baseEdges=[['brief','plans'],['context','plans'],['plans','review'],['review','routing'],['routing','claims'],['routing','comms'],['claims','execution'],['tools','execution'],['execution','tests'],['tests','artifact'],['artifact','correction'],['artifact','handoff'],['correction','memory'],['handoff','memory'],['memory','context'],['handoff','comms'],['comms','claims'],['context','routing']];
-  const baseSet=new Set(baseEdges.map(e=>e.slice().sort().join('|')));
-  const compatibility={reasoning:['memory','coordination'],memory:['reasoning','coordination','verification'],coordination:['reasoning','memory','execution','verification'],execution:['coordination','verification'],verification:['execution','coordination','memory']};
 
-  const presets={
-    balanced:{brief:[-310,-170],context:[-320,35],plans:[-150,-190],review:[25,-175],routing:[170,-120],claims:[300,-55],comms:[235,80],execution:[285,190],tools:[115,215],tests:[120,335],artifact:[-45,330],correction:[-210,305],handoff:[-315,210],memory:[-350,125]},
-    research:{brief:[-300,-160],context:[-250,-30],plans:[-120,-150],review:[20,-110],routing:[160,-40],claims:[300,40],comms:[240,145],execution:[320,210],tools:[125,250],tests:[100,350],artifact:[-45,350],correction:[-185,300],handoff:[-260,205],memory:[-285,80]},
-    delivery:{brief:[-320,-190],context:[-360,20],plans:[-155,-155],review:[-20,-100],routing:[130,-65],claims:[230,-20],comms:[245,90],execution:[245,190],tools:[110,190],tests:[175,300],artifact:[30,335],correction:[-190,335],handoff:[-290,220],memory:[-355,125]},
-    assurance:{brief:[-300,-190],context:[-300,-15],plans:[-135,-180],review:[20,-135],routing:[165,-75],claims:[285,-15],comms:[255,95],execution:[255,185],tools:[115,190],tests:[155,260],artifact:[35,285],correction:[-90,330],handoff:[-235,270],memory:[-300,155]}
-  };
-  const presetNames={balanced:'Balanced company',research:'Research-heavy',delivery:'Delivery-biased',assurance:'High-assurance'};
-  const pairEffects={
-    'context|plans':'Planning inherits more prior project knowledge, so senior agents spend less time rediscovering constraints and more time extending what is already known.',
-    'memory|plans':'Independent planners are strongly informed by accepted history. This improves continuity, but too much coupling can reduce fresh approaches.',
-    'plans|review':'Independent proposals reach decision review quickly. Agents converge faster, but very tight coupling can shorten the period in which alternatives remain genuinely independent.',
-    'review|execution':'Decision authority sits close to implementation. Engineers start sooner after convergence, reducing coordination latency.',
-    'routing|execution':'Specialist selection directly shapes implementation. Work reaches the agent with the right skill set before generic execution takes over.',
-    'claims|execution':'Ownership and editing become tightly coupled. Agents are less likely to touch shared files without visible responsibility.',
-    'comms|routing':'Routing decisions are strongly informed by current team state and handoffs, making reassignment and collaboration easier.',
-    'tools|execution':'Agents can turn decisions into real repository, runtime and build actions with very little translation overhead.',
-    'execution|tests':'Testing follows implementation closely. Engineers get faster feedback and defects are cheaper to correct.',
-    'artifact|tests':'Local checks stay anchored to the authoritative artifact, reducing the chance that a green test is mistaken for a successful deployment.',
-    'artifact|correction':'Runtime evidence immediately feeds correction. Failed assumptions are less likely to survive into later work.',
-    'correction|memory':'Disproved claims become durable lessons. Future agents inherit the correction instead of repeating the same mistake.',
-    'handoff|memory':'Completion evidence is converted directly into future context, so later sessions can resume with less reconstruction.',
-    'context|routing':'Specialist assignment uses historical knowledge about the project, not just the current prompt.'
-  };
+  const canonical=[['brief','plans'],['context','plans'],['plans','review'],['review','routing'],['routing','claims'],['routing','comms'],['claims','execution'],['tools','execution'],['execution','tests'],['tests','artifact'],['artifact','correction'],['artifact','handoff'],['correction','memory'],['handoff','memory'],['memory','context'],['handoff','comms'],['comms','claims'],['context','routing']];
+  const canonicalSet=new Set(canonical.map(([a,b])=>a+'>'+b));
+  const compatibility={reasoning:{reasoning:1,memory:.92,coordination:.84,execution:.38,verification:.5},memory:{reasoning:.95,memory:.65,coordination:.78,execution:.3,verification:.82},coordination:{reasoning:.72,memory:.7,coordination:.62,execution:.96,verification:.76},execution:{reasoning:.28,memory:.25,coordination:.82,execution:.62,verification:1},verification:{reasoning:.45,memory:.92,coordination:.72,execution:.9,verification:.72}};
 
-  let w=0,h=0,dpr=1,scale=1,tx=0,ty=0,drag=false,dragNode=null,lastX=0,lastY=0,hover=null,active=by('brief'),flow=!reduce,phase=0,currentPreset='balanced',lastMetrics=null;
-  const pairKey=(a,b)=>[a.id||a,b.id||b].sort().join('|');
-  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-  const coupling=(a,b)=>Math.max(0,1-dist(a,b)/285);
-  const avg=(pairs)=>pairs.reduce((s,[a,b])=>s+coupling(by(a),by(b)),0)/pairs.length;
-  function metrics(){
-    const reason=avg([['brief','plans'],['context','plans'],['plans','review'],['review','routing']]);
-    const speed=avg([['routing','claims'],['routing','execution'],['claims','execution'],['tools','execution'],['execution','tests']]);
-    const verify=avg([['execution','tests'],['tests','artifact'],['artifact','correction'],['artifact','handoff']]);
-    const memory=avg([['context','plans'],['correction','memory'],['handoff','memory'],['memory','context']]);
-    const coordination=avg([['routing','comms'],['comms','claims'],['comms','handoff'],['routing','claims']]);
-    return {reason:Math.round(reason*100),speed:Math.round(speed*100),verify:Math.round(verify*100),memory:Math.round(memory*100),coordination:Math.round(coordination*100)};
-  }
-  function classify(m){
-    if(m.verify>78&&m.memory>70)return'High-assurance company';
-    if(m.reason>80&&m.memory>68)return'Research-intensive company';
-    if(m.speed>80&&m.verify<62)return'Fast-delivery company';
-    if(m.coordination<48)return'Fragmented organisation';
-    if(Math.max(m.reason,m.speed,m.verify,m.memory)-Math.min(m.reason,m.speed,m.verify,m.memory)<18)return'Balanced company';
-    const top=Object.entries({reason:m.reason,speed:m.speed,verify:m.verify,memory:m.memory}).sort((a,b)=>b[1]-a[1])[0][0];
-    return ({reason:'Deliberation-heavy company',speed:'Execution-heavy company',verify:'Verification-heavy company',memory:'Memory-heavy company'})[top];
-  }
-  function updateMetrics(){
-    const m=metrics();lastMetrics=m;
-    for(const k of ['reason','speed','verify','memory']){const [bar,val]=metricEls[k];if(bar)bar.style.width=m[k]+'%';if(val)val.textContent=m[k];}
-    if(profileName)profileName.textContent=classify(m);
-  }
-  function nearest(n){return nodes.filter(x=>x!==n).map(x=>[x,dist(n,x)]).sort((a,b)=>a[1]-b[1]).slice(0,3);}
-  function explainMove(n){
-    const near=nearest(n),strong=near.filter(([,d])=>d<220); let text='';
-    if(strong.length){
-      const [other,d]=strong[0],specific=pairEffects[pairKey(n,other)];
-      text=specific||`${n.label} is now tightly coupled to ${other.label}. In agent terms, ${n.agent.toLowerCase()} would influence ${other.agent.toLowerCase()} earlier and more strongly in the work cycle.`;
-      if(strong[1])text+=` It is also pulling toward ${strong[1][0].label}, creating a three-way dependency rather than a simple pipeline.`;
-    }else text=`${n.label} is relatively isolated. In practice, ${n.agent.toLowerCase()} would become a weaker constraint on neighbouring agent behaviour, increasing local autonomy but reducing shared context.`;
-    const m=lastMetrics||metrics();
-    const low=Object.entries({reason:m.reason,speed:m.speed,verify:m.verify,memory:m.memory}).sort((a,b)=>a[1]-b[1])[0];
-    if(low[1]<48)text+=` The current configuration is weakest in ${{reason:'reasoning depth',speed:'execution velocity',verify:'verification rigor',memory:'memory continuity'}[low[0]]}, so that is where the organisation would feel the trade-off first.`;
-    if(translation)translation.textContent=text;
-  }
-  function setDetail(n){
-    active=n; const near=nearest(n);
-    if(detail)detail.innerHTML=`<div class="node-class">${n.layer}</div><h4>${n.label}</h4><p>${n.desc}</p><ul><li><span>Agent translation</span><b>${n.agent}</b></li><li><span>Strongest coupling</span><b>${near[0][0].label}</b></li><li><span>Influence</span><b>${Math.round(coupling(n,near[0][0])*100)}%</b></li></ul>`;
-    explainMove(n);
-  }
-  function applyPreset(name,animate=true){
-    currentPreset=name; const target=presets[name];
-    nodes.forEach(n=>{const [x,y]=target[n.id]; if(animate&&!reduce){n.vx=(x-n.x)/14;n.vy=(y-n.y)/14;n._target=[x,y];}else{n.x=x;n.y=y;n._target=null;}});
-    presetBtns.forEach(b=>b.classList.toggle('active',b.dataset.preset===name)); if(profileName)profileName.textContent=presetNames[name]; setDetail(active);updateMetrics();
-  }
-  function emergentEdges(){
-    const out=[];
-    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
-      const a=nodes[i],b=nodes[j],key=pairKey(a,b),c=coupling(a,b),compatible=compatibility[a.layer]?.includes(b.layer)||a.layer===b.layer;
-      if(baseSet.has(key))out.push({a,b,w:.56+c*.44,base:true}); else if(compatible&&c>.43)out.push({a,b,w:(c-.43)/.57*.62,base:false});
-    }
-    return out;
-  }
-  function resize(){const r=stage.getBoundingClientRect();w=r.width;h=r.height;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);tx=w/2;ty=h/2;scale=Math.min(1,Math.max(.62,w/770));}
+  const initial={brief:[-315,-165],context:[-340,40],plans:[-150,-185],review:[25,-170],routing:[165,-112],claims:[285,-42],comms:[245,82],execution:[290,182],tools:[105,210],tests:[145,302],artifact:[-20,322],correction:[-185,300],handoff:[-295,215],memory:[-350,130]};
+  const challenges=[
+    {name:'Urgent hotfix',brief:'A production regression is costing customers. Restore function quickly, but do not ship without proof.',targets:{speed:74,verify:68,memory:42,reason:46},weights:{speed:1.35,verify:1.2,memory:.55,reason:.6},tip:'Shorten Routing → Implementation → Tests → Artifact without cutting the verification loop.'},
+    {name:'Novel research problem',brief:'The team has never solved this class of problem before. Preserve independent thought and use history without anchoring too hard.',targets:{reason:78,memory:62,verify:52,speed:38},weights:{reason:1.4,memory:1.1,verify:.65,speed:.4},tip:'Couple Context to planning, but keep Independent Plans with enough space to stay genuinely independent.'},
+    {name:'High assurance release',brief:'The change touches critical infrastructure. Confidence and recoverability matter more than raw throughput.',targets:{verify:84,memory:72,reason:58,speed:34},weights:{verify:1.5,memory:1.15,reason:.7,speed:.25},tip:'Build a tight execution → testing → artifact → correction → memory loop.'},
+    {name:'Parallel feature build',brief:'Several specialists need to work at once on shared surfaces without stepping on each other.',targets:{speed:66,reason:52,verify:58,memory:48},weights:{speed:1.05,reason:.7,verify:.75,memory:.65},extra:m=>m.collision<22,tip:'Keep Routing, Claims, Comms and Implementation strongly coupled. Low collision risk is mandatory.'},
+    {name:'Long-lived project handoff',brief:'A project will change hands repeatedly. Future agents must inherit decisions, evidence and corrections intact.',targets:{memory:86,verify:64,reason:54,speed:34},weights:{memory:1.55,verify:.8,reason:.6,speed:.25},tip:'Strengthen Artifact → Handoff → Durable Memory → Project Context while keeping correction attached.'}
+  ];
+  let challengeIndex=0;
+
+  const controls=document.querySelector('.profile-controls');
+  if(controls)controls.innerHTML=`<div class="puzzle-brief"><span>NEURAL PUZZLE</span><strong id="puzzleName"></strong><p id="puzzleBrief"></p></div><div class="puzzle-actions"><button id="newPuzzle" type="button">New puzzle</button><button id="shuffleNet" type="button">Scramble network</button></div>`;
+  const metricsBox=document.querySelector('.lab-metrics');
+  if(metricsBox)metricsBox.insertAdjacentHTML('beforebegin',`<div class="puzzle-status"><div><span>Objective fit</span><strong id="puzzleScore">0</strong><small>/100</small></div><div class="puzzle-goals" id="puzzleGoals"></div><div class="solve-state" id="solveState">Rewire the network</div></div>`);
+  const puzzleName=document.getElementById('puzzleName'),puzzleBrief=document.getElementById('puzzleBrief'),puzzleScore=document.getElementById('puzzleScore'),puzzleGoals=document.getElementById('puzzleGoals'),solveState=document.getElementById('solveState');
+  document.getElementById('newPuzzle')?.addEventListener('click',()=>{challengeIndex=(challengeIndex+1)%challenges.length;loadChallenge();});
+  document.getElementById('shuffleNet')?.addEventListener('click',()=>scramble());
+
+  let w=0,h=0,dpr=1,scale=1,tx=0,ty=0,drag=false,dragNode=null,lastX=0,lastY=0,hover=null,active=by('brief'),flow=!reduce,particles=[],shockwaves=[],sparks=[],edgeState=new Set(),solveHold=0,solved=false,lastMetrics=null;
+  const pairKey=(a,b)=>a.id+'>'+b.id;
+  const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const screen=n=>({x:n.x*scale+tx,y:n.y*scale+ty,r:n.r*scale});
-  function hit(x,y){for(let i=nodes.length-1;i>=0;i--){const n=nodes[i],s=screen(n);if(Math.hypot(x-s.x,y-s.y)<s.r+9)return n;}return null;}
-  function stepTargets(){nodes.forEach(n=>{if(!n._target)return;n.x+=n.vx;n.y+=n.vy;const [x,y]=n._target;if(Math.hypot(x-n.x,y-n.y)<8){n.x=x;n.y=y;n._target=null;}else{n.vx*=.86;n.vy*=.86;n.vx+=(x-n.x)*.015;n.vy+=(y-n.y)*.015;}});}
-  function draw(t){stepTargets();ctx.clearRect(0,0,w,h);phase=t||0;const edges=emergentEdges();
-    edges.forEach((e,i)=>{const a=screen(e.a),b=screen(e.b),mx=(a.x+b.x)/2,sel=e.a===active||e.b===active;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.bezierCurveTo(mx,a.y,mx,b.y,b.x,b.y);ctx.strokeStyle=sel?`rgba(243,155,200,${.18+e.w*.42})`:`rgba(255,255,255,${.025+e.w*.13})`;ctx.lineWidth=sel?1.3:Math.max(.45,e.w);ctx.stroke();if(flow&&e.w>.32){const p=((phase/1300)+i*.083)%1,q=1-p,px=q*q*q*a.x+3*q*q*p*mx+3*q*p*p*mx+p*p*p*b.x,py=q*q*q*a.y+3*q*q*p*a.y+3*q*p*p*b.y+p*p*p*b.y;ctx.beginPath();ctx.arc(px,py,sel?2.3:1.35,0,Math.PI*2);ctx.fillStyle=colors[e.a.layer];ctx.fill();}});
-    nodes.forEach(n=>{const s=screen(n),isA=n===active,isH=n===hover;ctx.save();ctx.shadowBlur=isA?30:isH?18:9;ctx.shadowColor=colors[n.layer];ctx.beginPath();ctx.arc(s.x,s.y,s.r+(isA?3:0),0,Math.PI*2);ctx.fillStyle=isA?'rgba(20,18,27,.98)':'rgba(8,8,13,.96)';ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle=isA?colors[n.layer]:'rgba(255,255,255,.16)';ctx.lineWidth=isA?1.6:1;ctx.stroke();ctx.beginPath();ctx.arc(s.x,s.y,3.1,0,Math.PI*2);ctx.fillStyle=colors[n.layer];ctx.fill();ctx.font=`${Math.max(8,9.4*scale)}px Inter,system-ui`;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle=isA?'#fff':'#9e97a3';ctx.fillText(n.label,s.x,s.y+s.r+7);ctx.restore();});requestAnimationFrame(draw);}
 
-  stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);lastX=e.offsetX;lastY=e.offsetY;dragNode=hit(lastX,lastY);drag=true;stage.classList.add('dragging');if(dragNode){dragNode._target=null;setDetail(dragNode);}});
-  stage.addEventListener('pointermove',e=>{const x=e.offsetX,y=e.offsetY;hover=hit(x,y);if(!drag)return;const dx=x-lastX,dy=y-lastY;lastX=x;lastY=y;if(dragNode){dragNode.x+=dx/scale;dragNode.y+=dy/scale;currentPreset='custom';updateMetrics();setDetail(dragNode);}else{tx+=dx;ty+=dy;}});
-  const end=()=>{drag=false;dragNode=null;stage.classList.remove('dragging');};stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
-  stage.addEventListener('wheel',e=>{e.preventDefault();const old=scale,f=Math.exp(-e.deltaY*.0011);scale=Math.min(1.8,Math.max(.45,scale*f));const wx=(e.offsetX-tx)/old,wy=(e.offsetY-ty)/old;tx=e.offsetX-wx*scale;ty=e.offsetY-wy*scale;},{passive:false});
-  stage.addEventListener('click',e=>{const n=hit(e.offsetX,e.offsetY);if(n)setDetail(n);});
-  resetBtn?.addEventListener('click',()=>{applyPreset('balanced',true);tx=w/2;ty=h/2;scale=Math.min(1,Math.max(.62,w/770));});
+  function allowedDirection(a,b){if(a.id==='memory'&&b.id==='context')return true;if(a.id==='artifact'&&(b.id==='correction'||b.id==='handoff'))return true;if((a.id==='correction'||a.id==='handoff')&&b.id==='memory')return true;if(a.id==='handoff'&&b.id==='comms')return true;return a.order<b.order||(a.order===b.order&&canonicalSet.has(pairKey(a,b)));}
+  function edgeWeight(a,b){if(!allowedDirection(a,b))return 0;const proximity=clamp(1-distance(a,b)/300,0,1),compat=compatibility[a.layer]?.[b.layer]||.25,boost=canonicalSet.has(pairKey(a,b))?1.18:1;return clamp(proximity*compat*boost,0,1);}
+  function buildEdges(){const edges=[];for(const a of nodes)for(const b of nodes){if(a===b)continue;const wt=edgeWeight(a,b);if(wt>.18)edges.push({a,b,w:wt,canonical:canonicalSet.has(pairKey(a,b))});}return edges;}
+  function runNetwork(edges){const incoming=new Map(nodes.map(n=>[n,[]]));edges.forEach(e=>incoming.get(e.b).push(e));for(const n of nodes){if(n.id==='brief'){n.next=1;continue;}let sum=n.bias;for(const e of incoming.get(n))sum+=e.a.act*e.w*2.25;if(n.layer==='memory')sum+=n.act*.55;n.next=sigmoid(sum*n.gain);}for(const n of nodes)n.act=n.act*.76+n.next*.24;}
+  const coupling=(a,b)=>edgeWeight(by(a),by(b));
+  function metrics(){const reason=(coupling('brief','plans')*.22+coupling('context','plans')*.26+coupling('plans','review')*.3+coupling('review','routing')*.22)*100;const speed=(coupling('routing','claims')*.13+coupling('claims','execution')*.18+coupling('tools','execution')*.22+coupling('execution','tests')*.24+by('execution').act*.23)*100;const verify=(coupling('execution','tests')*.26+coupling('tests','artifact')*.34+coupling('artifact','correction')*.18+by('artifact').act*.22)*100;const memory=(coupling('correction','memory')*.22+coupling('handoff','memory')*.28+coupling('memory','context')*.3+by('memory').act*.2)*100;const coordination=(coupling('routing','claims')*.25+coupling('routing','comms')*.24+coupling('comms','claims')*.28+coupling('handoff','comms')*.23)*100;const collision=clamp(62-coordination*.55-coupling('claims','execution')*38,0,100);return{reason:Math.round(reason),speed:Math.round(speed),verify:Math.round(verify),memory:Math.round(memory),coordination:Math.round(coordination),collision:Math.round(collision),output:Math.round((by('artifact').act*.7+by('memory').act*.3)*100)};}
+  function score(m){const ch=challenges[challengeIndex];let total=0,den=0;for(const k of ['reason','speed','verify','memory']){const weight=ch.weights[k]||1;den+=weight;total+=weight*clamp(m[k]/ch.targets[k],0,1);}if(ch.extra&&!ch.extra(m))total*=.72;return Math.round(total/den*100);}
+  function updateGoals(m){if(!puzzleGoals)return;const ch=challenges[challengeIndex];puzzleGoals.innerHTML=['reason','speed','verify','memory'].map(k=>`<span class="${m[k]>=ch.targets[k]?'met':''}"><b>${{reason:'Reason',speed:'Speed',verify:'Verify',memory:'Memory'}[k]}</b>${m[k]} / ${ch.targets[k]}</span>`).join('')+(ch.extra?`<span class="${ch.extra(m)?'met':''}"><b>Collision</b>${m.collision} / &lt;22</span>`:'');}
+  function updateMetrics(){const m=metrics();lastMetrics=m;for(const k of ['reason','speed','verify','memory']){const [bar,val]=metricEls[k]||[];if(bar)bar.style.width=clamp(m[k],0,100)+'%';if(val)val.textContent=m[k];}const s=score(m);if(puzzleScore)puzzleScore.textContent=s;const ch=challenges[challengeIndex],pass=['reason','speed','verify','memory'].every(k=>m[k]>=ch.targets[k])&&(!ch.extra||ch.extra(m));if(pass){solveHold+=1/60;if(solveState)solveState.textContent=`Hold configuration ${Math.max(0,1.4-solveHold).toFixed(1)}s`;if(solveHold>1.4&&!solved)completePuzzle();}else{solveHold=0;if(solveState)solveState.textContent=s>85?'Almost there':'Rewire the network';}if(profileName)profileName.textContent=s>=95?'Elegant solution':s>=80?'Strong architecture':s>=60?'Promising architecture':'Unstable architecture';updateGoals(m);}
+  function loadChallenge(){solved=false;solveHold=0;if(solveState)solveState.classList.remove('solved');const ch=challenges[challengeIndex];if(puzzleName)puzzleName.textContent=ch.name;if(puzzleBrief)puzzleBrief.textContent=ch.brief;if(solveState)solveState.textContent='Rewire the network';if(translation)translation.textContent=ch.tip;updateMetrics();}
+  function setInitial(){nodes.forEach(n=>{const p=initial[n.id];n.x=p[0];n.y=p[1];n.act=n.id==='brief'?1:.05;n.next=n.act;});edgeState=new Set();particles=[];shockwaves=[];sparks=[];solved=false;solveHold=0;}
+  function scramble(){solved=false;solveHold=0;nodes.forEach(n=>{if(n.id==='brief')return;n.x=-350+Math.random()*700;n.y=-230+Math.random()*540;n.act=.05;});burst(w*.52,h*.48,40,'#f39bc8');if(translation)translation.textContent='The architecture has been scrambled. Rebuild a topology that satisfies the puzzle objectives.';}
+  function burst(x,y,count,color){for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*4;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:.8+Math.random()*2,color});}}
+  function wireFx(a,b){const sa=screen(a),sb=screen(b),mx=(sa.x+sb.x)/2,my=(sa.y+sb.y)/2;shockwaves.push({x:mx,y:my,r:3,life:1,color:colors[a.layer]});burst(mx,my,18,colors[b.layer]);for(let i=0;i<7;i++)sparks.push({a,b,t:Math.random()*.2,life:1,speed:.018+Math.random()*.018});}
+  function completePuzzle(){solved=true;if(solveState){solveState.textContent='Puzzle solved';solveState.classList.add('solved');}burst(w*.5,h*.5,110,'#ffffff');for(const n of nodes){const s=screen(n);shockwaves.push({x:s.x,y:s.y,r:2,life:1,color:colors[n.layer]});}if(translation)translation.textContent=`Solved. ${challenges[challengeIndex].name} now satisfies every constraint. There is no single required layout: the puzzle is about building the right information flow and trade-offs.`;}
+  function nearest(n){return nodes.filter(x=>x!==n).map(x=>[x,distance(n,x),edgeWeight(n,x),edgeWeight(x,n)]).sort((a,b)=>a[1]-b[1]).slice(0,4);}
+  function explain(n){const near=nearest(n),strong=near.filter(x=>Math.max(x[2],x[3])>.36);let text;if(strong.length){const[o,,outW,inW]=strong[0];text=outW>inW?`${n.label} now strongly feeds ${o.label}. For the agents, ${n.agent.toLowerCase()} becomes an earlier and stronger influence on ${o.agent.toLowerCase()}.`:`${n.label} is now strongly driven by ${o.label}. For the agents, ${n.agent.toLowerCase()} becomes more dependent on ${o.agent.toLowerCase()}.`;if(strong[1])text+=` ${strong[1][0].label} is also close enough to form a secondary pathway, creating a multi-input decision rather than a simple chain.`;}else text=`${n.label} is isolated. ${n.agent} now has more autonomy, but less information reaches it and less of its output shapes the rest of the company.`;const m=lastMetrics||metrics(),ch=challenges[challengeIndex],weakest=['reason','speed','verify','memory'].sort((a,b)=>(m[a]/ch.targets[a])-(m[b]/ch.targets[b]))[0];text+=` For this puzzle, the biggest remaining pressure is ${{reason:'reasoning depth',speed:'execution velocity',verify:'verification rigor',memory:'memory continuity'}[weakest]}.`;if(translation)translation.textContent=text;}
+  function setDetail(n){active=n;const near=nearest(n),strong=near[0];if(detail)detail.innerHTML=`<div class="node-class">${n.kind}</div><h4>${n.label}</h4><p>${n.desc}</p><ul><li><span>Agent meaning</span><b>${n.agent}</b></li><li><span>Activation</span><b>${Math.round(n.act*100)}%</b></li><li><span>Closest function</span><b>${strong[0].label}</b></li><li><span>Coupling</span><b>${Math.round(Math.max(strong[2],strong[3])*100)}%</b></li></ul>`;explain(n);}
+  function resize(){const r=stage.getBoundingClientRect();w=r.width;h=r.height;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);tx=w/2;ty=h/2;scale=Math.min(1,Math.max(.62,w/780));}
+  function hit(x,y){for(let i=nodes.length-1;i>=0;i--){const n=nodes[i],s=screen(n);if(Math.hypot(x-s.x,y-s.y)<s.r+10)return n;}return null;}
+  function drawGrid(){ctx.save();ctx.strokeStyle='rgba(255,255,255,.022)';ctx.lineWidth=.5;const step=28;for(let x=((tx%step)+step)%step;x<w;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(let y=((ty%step)+step)%step;y<h;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}ctx.restore();}
+  function edgeCurve(a,b,t){const sa=screen(a),sb=screen(b),mx=(sa.x+sb.x)/2,q=1-t;return{x:q*q*q*sa.x+3*q*q*t*mx+3*q*t*t*mx+t*t*t*sb.x,y:q*q*q*sa.y+3*q*q*t*sa.y+3*q*t*t*sb.y+t*t*t*sb.y};}
+  function draw(now){ctx.clearRect(0,0,w,h);drawGrid();const edges=buildEdges();runNetwork(edges);const current=new Set(edges.filter(e=>e.w>.43).map(e=>pairKey(e.a,e.b)));for(const k of current)if(!edgeState.has(k)){const[a,b]=k.split('>');wireFx(by(a),by(b));}edgeState=current;edges.forEach((e,i)=>{const a=screen(e.a),b=screen(e.b),mx=(a.x+b.x)/2,sel=e.a===active||e.b===active;ctx.save();ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.bezierCurveTo(mx,a.y,mx,b.y,b.x,b.y);const grad=ctx.createLinearGradient(a.x,a.y,b.x,b.y);grad.addColorStop(0,colors[e.a.layer]+'66');grad.addColorStop(1,colors[e.b.layer]+'66');ctx.strokeStyle=sel?grad:`rgba(255,255,255,${.025+e.w*.17})`;ctx.lineWidth=sel?1.7:.5+e.w*1.4;ctx.shadowBlur=sel?12:0;ctx.shadowColor=colors[e.a.layer];ctx.stroke();ctx.restore();if(flow&&e.w>.28){const t=((now/1250)+i*.071)%1,p=edgeCurve(e.a,e.b,t);ctx.beginPath();ctx.arc(p.x,p.y,sel?2.6:1.4,0,Math.PI*2);ctx.fillStyle=colors[e.a.layer];ctx.shadowBlur=10;ctx.shadowColor=colors[e.a.layer];ctx.fill();ctx.shadowBlur=0;}});for(const sp of sparks){sp.t+=sp.speed;sp.life-=.018;if(sp.t>1)sp.t=0;const p=edgeCurve(sp.a,sp.b,sp.t);ctx.beginPath();ctx.arc(p.x,p.y,1.8,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${sp.life})`;ctx.fill();}sparks=sparks.filter(s=>s.life>0);for(const s of shockwaves){ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.strokeStyle=s.color+Math.floor(clamp(s.life,0,1)*255).toString(16).padStart(2,'0');ctx.lineWidth=1.2;ctx.stroke();s.r+=3.4;s.life-=.045;}shockwaves=shockwaves.filter(s=>s.life>0);for(const p of particles){ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.color+Math.floor(clamp(p.life,0,1)*255).toString(16).padStart(2,'0');ctx.fill();p.x+=p.vx;p.y+=p.vy;p.vx*=.97;p.vy*=.97;p.life-=.025;}particles=particles.filter(p=>p.life>0);nodes.forEach(n=>{const s=screen(n),isA=n===active,isH=n===hover,act=n.act;ctx.save();ctx.shadowBlur=10+act*32;ctx.shadowColor=colors[n.layer];const rg=ctx.createRadialGradient(s.x-s.r*.28,s.y-s.r*.32,1,s.x,s.y,s.r*1.2);rg.addColorStop(0,`rgba(255,255,255,${.08+act*.12})`);rg.addColorStop(.35,colors[n.layer]+Math.floor((.12+act*.18)*255).toString(16).padStart(2,'0'));rg.addColorStop(1,'rgba(7,7,12,.98)');ctx.beginPath();ctx.arc(s.x,s.y,s.r+(isA?3:0),0,Math.PI*2);ctx.fillStyle=rg;ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle=isA?colors[n.layer]:isH?'rgba(255,255,255,.38)':'rgba(255,255,255,.15)';ctx.lineWidth=isA?1.8:1;ctx.stroke();ctx.beginPath();ctx.arc(s.x,s.y,2.6+act*2.4,0,Math.PI*2);ctx.fillStyle=colors[n.layer];ctx.fill();ctx.font=`600 ${Math.max(8,9.2*scale)}px Inter,system-ui`;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle=isA?'#fff':'#aaa3ae';ctx.fillText(n.label,s.x,s.y+s.r+7);ctx.restore();});updateMetrics();if(active&&detail&&Math.random()<.06)setDetail(active);requestAnimationFrame(draw);}
+  stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);lastX=e.offsetX;lastY=e.offsetY;dragNode=hit(lastX,lastY);drag=true;stage.classList.add('dragging');if(dragNode){setDetail(dragNode);const s=screen(dragNode);shockwaves.push({x:s.x,y:s.y,r:4,life:.8,color:colors[dragNode.layer]});}});
+  stage.addEventListener('pointermove',e=>{const x=e.offsetX,y=e.offsetY;hover=hit(x,y);if(!drag)return;const dx=x-lastX,dy=y-lastY;lastX=x;lastY=y;if(dragNode){dragNode.x+=dx/scale;dragNode.y+=dy/scale;setDetail(dragNode);}else{tx+=dx;ty+=dy;}});
+  const end=()=>{if(dragNode){const s=screen(dragNode);burst(s.x,s.y,10,colors[dragNode.layer]);setDetail(dragNode);}drag=false;dragNode=null;stage.classList.remove('dragging');};stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
+  stage.addEventListener('wheel',e=>{e.preventDefault();const old=scale,f=Math.exp(-e.deltaY*.0012);scale=clamp(scale*f,.42,2.2);const wx=(e.offsetX-tx)/old,wy=(e.offsetY-ty)/old;tx=e.offsetX-wx*scale;ty=e.offsetY-wy*scale;},{passive:false});
+  resetBtn?.addEventListener('click',()=>{setInitial();tx=w/2;ty=h/2;scale=Math.min(1,Math.max(.62,w/780));setDetail(by('brief'));loadChallenge();});
   pulseBtn?.addEventListener('click',()=>{flow=!flow;pulseBtn.textContent=flow?'Pause flow':'Resume flow';});
-  presetBtns.forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset,true)));
-  resize();applyPreset('balanced',false);addEventListener('resize',resize,{passive:true});requestAnimationFrame(draw);
+  setInitial();resize();addEventListener('resize',resize,{passive:true});setDetail(active);loadChallenge();requestAnimationFrame(draw);
 })();
