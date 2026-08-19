@@ -35,7 +35,7 @@ That rewrites this folder. Hand-edits here are lost on the next export.
 | --- | --- |
 | `index.html` | Front page — headcount, programs, method, leadership, principles |
 | `programs.html` | The five programs in detail |
-| `team.html` | Org chart with Khai at the top, plus the department structure |
+| `team.html` | Pyramid org chart with Khai at the top and the current agent roles |
 | `careers.html` | Open positions, each with the failure that made it necessary |
 | `about.html` | How the company works, the principles, about the founder |
 | `contact.html` | One email address and what to put in the first message |
@@ -52,23 +52,24 @@ and is a separate application.
 
 ## Hosting
 
-**Production: Namecheap cPanel.** khai.love uses Namecheap Web Hosting DNS, so
-cPanel owns the DNS records and serves whatever is in the account's docroot.
-Deploying is a file upload:
+**Production: GitHub Pages.** The `main` branch is the deployment source and
+the repository's `CNAME` file binds it to `khai.love`.
 
-1. cPanel → **File Manager** → `public_html` (or `public_html/khai.love` if it
-   is set up as an addon domain).
-2. Delete the parking placeholder if present — a leftover `index.php` takes
-   priority over `index.html` and you will keep seeing the old page.
-3. Upload all six `.html` files.
+Normal deployment is:
 
-**GitHub Pages** — <https://wildrabbet.github.io/khai.love/>, built from `main`.
-The repository contains a `CNAME` file for `khai.love`; the domain will serve
-from GitHub once its DNS records are changed from Namecheap/cPanel to the
-GitHub Pages records listed in the deployment handoff.
+```powershell
+git add .
+git commit -m "Describe the site change"
+git push origin main
+```
+
+Namecheap remains the domain registrar and DNS provider. Its BasicDNS records
+point the website at GitHub Pages; Private Email records are separate and must
+not be removed. The old cPanel copy is retained only as a rollback reference.
+
+Preview: <https://wildrabbet.github.io/khai.love/>
 
 ## Contact address
 
-`hello@khai.love` is referenced on the contact and careers pages. It is a cPanel
-mailbox and must exist, or those links are dead. Create it under
-cPanel → **Email Accounts**.
+`hello@khai.love` is referenced on the contact and careers pages. It is handled
+by Namecheap Private Email and is independent of the GitHub Pages website.
