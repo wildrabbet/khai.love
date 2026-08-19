@@ -3,10 +3,13 @@
 The public company site for **KHAI**. Six static pages, no build step at deploy
 time, no JavaScript framework, no external requests.
 
-## Do not hand-edit the HTML
+## Editing from the Codex workspace
 
-Every `.html` file here is **generated**. The source of truth is in the
-YGO-AI repo:
+This checkout is now the direct-edit and publish source for the public site.
+Edit the HTML files here, preview them locally, commit to `main`, and push to
+GitHub. GitHub Pages publishes the `main` branch.
+
+The older generator still exists in the YGO-AI repo:
 
 | Source | What it holds |
 | --- | --- |
@@ -14,7 +17,11 @@ YGO-AI repo:
 | `manager/templates/pub_base.html` | Shell: design tokens, nav, footer, scroll reveals |
 | `manager/templates/pub_*.html` | One template per page |
 
-To change the site, edit those and re-export:
+If that generator is run later, it may overwrite the HTML in this checkout.
+Treat this repository as the active publishing source unless we deliberately
+migrate the generator into it.
+
+To regenerate from the older source instead:
 
 ```bash
 python public.py
@@ -55,9 +62,10 @@ Deploying is a file upload:
    priority over `index.html` and you will keep seeing the old page.
 3. Upload all six `.html` files.
 
-**Preview: GitHub Pages** — <https://wildrabbet.github.io/khai.love/>, built
-from `main`. No custom domain attached, deliberately, so GitHub never competes
-with the real host for khai.love.
+**GitHub Pages** — <https://wildrabbet.github.io/khai.love/>, built from `main`.
+The repository contains a `CNAME` file for `khai.love`; the domain will serve
+from GitHub once its DNS records are changed from Namecheap/cPanel to the
+GitHub Pages records listed in the deployment handoff.
 
 ## Contact address
 
