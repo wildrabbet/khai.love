@@ -1,4 +1,11 @@
 (() => {
+  if (!document.querySelector('link[href="layout-fix.css"]')) {
+    const fix = document.createElement('link');
+    fix.rel = 'stylesheet';
+    fix.href = 'layout-fix.css';
+    document.head.appendChild(fix);
+  }
+
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const opening = document.getElementById('opening');
   document.documentElement.classList.add('js');
