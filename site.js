@@ -2,6 +2,26 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const opening = document.getElementById('opening');
   document.documentElement.classList.add('js');
+
+  document.querySelectorAll('.nav-links').forEach(nav => {
+    if (!nav.querySelector('a[href="services.html"]')) {
+      const home = nav.querySelector('a[href="index.html"]');
+      const link = document.createElement('a');
+      link.href = 'services.html';
+      link.textContent = 'Services';
+      if (home && home.nextSibling) nav.insertBefore(link, home.nextSibling);
+      else nav.insertBefore(link, nav.firstChild);
+    }
+  });
+  document.querySelectorAll('.footer-links').forEach(nav => {
+    if (!nav.querySelector('a[href="services.html"]')) {
+      const link = document.createElement('a');
+      link.href = 'services.html';
+      link.textContent = 'Services';
+      nav.insertBefore(link, nav.firstChild);
+    }
+  });
+
   if (opening) {
     if (reduce) opening.classList.add('hide');
     else addEventListener('load', () => setTimeout(() => opening.classList.add('hide'), 2450), {once:true});
@@ -27,10 +47,10 @@
   }, {passive:true});
 
   if (!reduce && matchMedia('(pointer:fine)').matches) {
-    document.querySelectorAll('.project,.flow-card,.command-deck').forEach(card => {
+    document.querySelectorAll('.project,.flow-card,.command-deck,.service-card,.cap-card,.engagement-card,.executive-card').forEach(card => {
       card.addEventListener('pointermove', e => {
         const r=card.getBoundingClientRect(), x=(e.clientX-r.left)/r.width-.5, y=(e.clientY-r.top)/r.height-.5;
-        card.style.transform=`perspective(900px) rotateX(${-y*2.4}deg) rotateY(${x*3.2}deg) translateY(-3px)`;
+        card.style.transform=`perspective(900px) rotateX(${-y*1.6}deg) rotateY(${x*2.2}deg) translateY(-3px)`;
       });
       card.addEventListener('pointerleave', () => card.style.transform='');
     });
@@ -46,7 +66,7 @@
     const count=Math.min(70,Math.max(28,Math.floor(w/22)));
     points=Array.from({length:count},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.16,vy:(Math.random()-.5)*.16,r:Math.random()*1.25+.3,p:Math.random()*6.28}));
   }
-  function frame(t){
+  function frame(){
     ctx.clearRect(0,0,w,h);
     for(const p of points){
       const dx=mouseX-p.x,dy=mouseY-p.y,dist=Math.hypot(dx,dy);
