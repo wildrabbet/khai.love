@@ -1,4 +1,38 @@
 (() => {
+  const installLightOnlyMode = () => {
+    let colorScheme = document.querySelector('meta[name="color-scheme"]');
+    if (!colorScheme) {
+      colorScheme = document.createElement('meta');
+      colorScheme.name = 'color-scheme';
+      document.head.prepend(colorScheme);
+    }
+    colorScheme.content = 'only light';
+
+    let supportedSchemes = document.querySelector('meta[name="supported-color-schemes"]');
+    if (!supportedSchemes) {
+      supportedSchemes = document.createElement('meta');
+      supportedSchemes.name = 'supported-color-schemes';
+      document.head.prepend(supportedSchemes);
+    }
+    supportedSchemes.content = 'light';
+
+    const guard = document.createElement('style');
+    guard.id = 'sugar-cookie-light-only';
+    guard.textContent = `
+      :root, html, body, #site {
+        color-scheme: only light !important;
+        forced-color-adjust: none;
+      }
+      html, body { background-color: #fffafb !important; }
+      input, button, dialog { color-scheme: only light !important; }
+    `;
+    document.head.prepend(guard);
+    document.documentElement.style.setProperty('color-scheme', 'only light', 'important');
+    document.documentElement.style.setProperty('background-color', '#fffafb', 'important');
+  };
+
+  installLightOnlyMode();
+
   const gate = document.getElementById('gate');
   const site = document.getElementById('site');
   const form = document.getElementById('gateForm');
