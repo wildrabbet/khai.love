@@ -3,129 +3,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#fff7f8">
+<meta name="theme-color" content="#fff7fa">
 <title>The Sugar Cookie House | Custom Sugar Cookies in Baldivis</title>
-<meta name="description" content="Customised sugar cookies made to order with love in Baldivis, Western Australia, from a council-approved kitchen.">
+<meta name="description" content="Handcrafted customised sugar cookies for birthdays, weddings, engagements, baby showers and celebrations in Baldivis, WA.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="gate" id="gate" aria-modal="true" role="dialog" aria-labelledby="gateTitle">
   <div class="gate-card">
-    <img src="assets/logo.webp" alt="The Sugar Cookie House logo">
-    <h1 id="gateTitle">The Sugar Cookie House</h1>
+    <div class="gate-cookie" aria-hidden="true"><span>• •</span><span>•</span></div>
+    <p class="gate-kicker">The Sugar Cookie House</p>
+    <h1 id="gateTitle">A little something sweet is waiting.</h1>
     <p>This private preview is password protected.</p>
-    <form class="gate-form" id="gateForm">
-      <label class="sr-only" for="gatePassword">Password</label>
-      <input id="gatePassword" type="password" autocomplete="current-password" placeholder="Password" required>
-      <button type="submit">Enter</button>
-    </form>
+    <form class="gate-form" id="gateForm"><label class="sr-only" for="gatePassword">Password</label><input id="gatePassword" type="password" autocomplete="current-password" placeholder="Password" required><button type="submit">Enter</button></form>
     <p class="gate-error" id="gateError" aria-live="polite"></p>
   </div>
 </div>
+
 <div id="site" class="site-locked">
-  <div class="announcement">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.35-9.3-8.4C.5 8.8 2.1 4.5 6.2 4.1c2.2-.2 4.1 1 5.1 2.5 1-1.5 2.9-2.7 5.1-2.5 4.1.4 5.7 4.7 3.5 8.5C19 16.65 12 21 12 21z"/></svg>
-    Customised sugar cookies made to order with love
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.35-9.3-8.4C.5 8.8 2.1 4.5 6.2 4.1c2.2-.2 4.1 1 5.1 2.5 1-1.5 2.9-2.7 5.1-2.5 4.1.4 5.7 4.7 3.5 8.5C19 16.65 12 21 12 21z"/></svg>
-  </div>
+  <div class="announcement"><span>♥</span> Customised sugar cookies made to order with love <span>♥</span></div>
   <header class="site-header">
     <div class="shell nav">
-      <a class="brand" href="#home" aria-label="The Sugar Cookie House home"><img src="assets/logo.webp" alt="The Sugar Cookie House"></a>
-      <nav class="nav-links" id="navLinks" aria-label="Primary navigation">
-        <a class="active" href="#home">Home</a>
-        <a href="#about">About</a>
-        <a href="#occasions">Occasions</a>
-        <a href="#gallery">Gallery</a>
-        <a href="#how">How to Order</a>
-        <a href="#faq" id="faqLink">FAQ</a>
-        <a href="#contact">Contact</a>
-      </nav>
-      <a class="order-button" href="mailto:Hailiefeatherstone@gmail.com?subject=Sugar%20Cookie%20Order%20Enquiry">Order Now
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-6.5-4-8.6-7.7C1.5 9.4 3 5.6 6.6 5.2c2-.2 3.7.9 4.6 2.3.9-1.4 2.6-2.5 4.6-2.3 3.6.4 5.1 4.2 3.2 7.6-2.1 3.7-8.5 7.7-8.5 7.7z"/></svg>
-      </a>
-      <button class="mobile-toggle" id="mobileToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <a class="brand" href="#home" aria-label="The Sugar Cookie House home"><img src="assets/sugar-cookie-house-logo.webp" alt="The Sugar Cookie House"></a>
+      <nav class="nav-links" id="navLinks" aria-label="Primary navigation"><a class="active" href="#home">Home</a><a href="#occasions">Occasions</a><a href="#gallery">Gallery</a><a href="#how">How to order</a><a href="#faq" id="faqLink">FAQ</a><a href="#contact">Contact</a></nav>
+      <a class="order-button" href="mailto:Hailiefeatherstone@gmail.com?subject=Sugar%20Cookie%20Order%20Enquiry">Order now <span>♡</span></a>
+      <button class="mobile-toggle" id="mobileToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Open menu">☰</button>
     </div>
   </header>
+
   <main>
     <section class="hero" id="home">
       <div class="shell hero-grid">
         <div class="hero-copy">
-          <h1>Customised<br>sugar cookies <span>perfect for any<br>occasion</span></h1>
-          <p class="hero-love">Made to order with love
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16M6.3 6.3l11.4 11.4M17.7 6.3 6.3 17.7"/></svg>
-          </p>
-          <div class="hero-meta">
-            <span class="meta-item"><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-13A7 7 0 0 0 5 9c0 6.8 7 13 7 13z"/><circle cx="12" cy="9" r="2.3"/></svg>Located Baldivis WA</span>
-            <span class="meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.2"/><path d="m8.5 13.2-1.2 7 4.7-2.8 4.7 2.8-1.2-7"/><path d="m10.3 8.9 1.1 1.1 2.3-2.5"/></svg>Council approved kitchen</span>
-          </div>
-          <div class="hero-actions">
-            <a class="button-primary" href="mailto:Hailiefeatherstone@gmail.com?subject=Sugar%20Cookie%20Order%20Enquiry">Order Your Cookies
-              <svg viewBox="0 0 24 24"><path d="M12 20.5s-6.5-4-8.6-7.7C1.5 9.4 3 5.6 6.6 5.2c2-.2 3.7.9 4.6 2.3.9-1.4 2.6-2.5 4.6-2.3 3.6.4 5.1 4.2 3.2 7.6-2.1 3.7-8.5 7.7-8.5 7.7z"/></svg>
-            </a>
-            <a class="button-secondary" href="#occasions">View Occasions <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></a>
-          </div>
+          <p class="eyebrow">Made in Baldivis, WA</p>
+          <h1>Custom sugar cookies <em>made for your favourite moments.</em></h1>
+          <p class="hero-intro">Birthday magic, tiny baby details, wedding sweetness and every lovely idea in between.</p>
+          <div class="hero-badges"><span>♡ Council approved kitchen</span><span>✦ Made to order</span></div>
+          <div class="hero-actions"><a class="button-primary" href="mailto:Hailiefeatherstone@gmail.com?subject=Sugar%20Cookie%20Order%20Enquiry">Order your cookies <span>♡</span></a><a class="button-secondary" href="#occasions">Browse occasions <span>↓</span></a></div>
         </div>
-        <div class="hero-visual">
-          <img class="hero-photo" src="assets/cookie-01.webp" alt="Father's Day custom sugar cookie gift box">
-          <svg class="hero-heart" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 42S5 30 5 16c0-6 4-10 10-10 4 0 7 2 9 5 2-3 5-5 9-5 6 0 10 4 10 10 0 14-19 26-19 26z"/></svg>
-        </div>
+        <div class="hero-visual"><div class="hero-sparkle sparkle-one">✦</div><div class="hero-sparkle sparkle-two">♡</div><img src="assets/pet-party-2nd-birthday.webp" alt="Pastel pawty themed second birthday sugar cookies with puppies, paw prints and balloons"></div>
       </div>
     </section>
-    <section class="trust-strip" aria-label="Business details">
-      <div class="shell trust-grid">
-        <div class="trust-item"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="m4 7 8 6 8-6"/></svg><div><strong>Hailiefeatherstone@gmail.com</strong></div></div>
-        <div class="trust-item"><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-13A7 7 0 0 0 5 9c0 6.8 7 13 7 13z"/><circle cx="12" cy="9" r="2.3"/></svg><div><strong>Baldivis, WA</strong><span>Australia</span></div></div>
-        <div class="trust-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.2"/><path d="m8.5 13.2-1.2 7 4.7-2.8 4.7 2.8-1.2-7"/><path d="m9.5 9 1.7 1.7 3.5-3.7"/></svg><div><strong>100% recommend</strong><span>(8 Reviews)</span></div></div>
-        <div class="trust-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><strong>Always open</strong></div></div>
-        <div class="trust-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.7-.8-1.7-1.2-3-1.2-1.7 0-2.8.8-2.8 2 0 3.2 6.4 1.6 6.4 5 0 1.4-1.3 2.4-3.2 2.4-1.5 0-2.8-.5-3.7-1.5M12 5.5v13"/></svg><div><strong>Price Range - $</strong></div></div>
-      </div>
-    </section>
-    <section class="section occasions" id="occasions">
-      <div class="shell">
-        <div class="section-intro"><span class="kicker">Made for life's sweetest moments</span><h2>Perfect for any occasion</h2></div>
-        <div class="occasion-grid">
-          <article class="occasion-card"><img src="assets/cookie-02.webp" alt="Pink baby shower sugar cookies"><div class="occasion-icon"><svg viewBox="0 0 32 32"><path d="M12 5c-2.5 0-4 2.2-4 4.8 0 3.2 2.6 6.4 6 8.4M20 5c2.5 0 4 2.2 4 4.8 0 3.2-2.6 6.4-6 8.4"/><circle cx="10" cy="22" r="2"/><circle cx="15" cy="25" r="2"/><circle cx="22" cy="22" r="2"/><circle cx="17" cy="25" r="2"/></svg></div><h3>Baby Showers</h3><p>Welcome the newest little love with the sweetest treats.</p></article>
-          <article class="occasion-card"><img src="assets/cookie-05.webp" alt="Minecraft themed birthday sugar cookies"><div class="occasion-icon"><svg viewBox="0 0 32 32"><path d="M5 13h22v13H5zM9 13V9h14v4M16 5v4M8 20h16M12 13v13M20 13v13"/><path d="M16 3c2 2 2 4 0 5-2-1-2-3 0-5z"/></svg></div><h3>Birthdays</h3><p>Make their day extra special with cookies as unique as they are.</p></article>
-          <article class="occasion-card"><img src="assets/cookie-03.webp" alt="White and mint baptism sugar cookies"><div class="occasion-icon"><svg viewBox="0 0 32 32"><path d="m16 4 9 10-9 14L7 14zM7 14h18M11 9h10M12 14l4 14 4-14"/></svg></div><h3>Weddings &amp; Engagements</h3><p>Celebrate love with elegant cookies made just for you.</p></article>
-          <article class="occasion-card"><img src="assets/cookie-07.webp" alt="Pink baby girl sugar cookies"><div class="occasion-icon"><svg viewBox="0 0 32 32"><path d="M16 27S5 20 5 12c0-3.5 2.4-6 5.8-6 2.3 0 4.1 1.2 5.2 3 1.1-1.8 2.9-3 5.2-3C24.6 6 27 8.5 27 12c0 8-11 15-11 15z"/></svg></div><h3>Gifts &amp; Celebrations</h3><p>From thank yous to just because, we've got you covered.</p></article>
+
+    <section class="trust-strip" aria-label="Business details"><div class="shell trust-grid"><p><b>✉</b> Hailiefeatherstone@gmail.com</p><p><b>⌖</b> Baldivis, Western Australia</p><p><b>♡</b> Personalised for your occasion</p><p><b>✦</b> Made with love, just for you</p></div></section>
+
+    <section class="category-section" id="occasions">
+      <div class="shell"><div class="section-intro"><p class="eyebrow">Cookies for every kind of happy</p><h2>Pick an occasion. Make it sweet.</h2><p>Every set is designed around your colours, your theme and your little details.</p></div>
+        <div class="category-grid">
+          <article class="category-card"><img src="assets/pet-party-2nd-birthday.webp" alt="Pastel puppy themed birthday cookies"><div><span>Birthday cookies</span><h3>Paw-ty birthdays</h3><p>Pets, paw prints, balloons and big birthday smiles.</p></div></article>
+          <article class="category-card"><img src="assets/bluey-second-birthday.webp" alt="Bluey themed second birthday cookies with rainbows"><div><span>Character birthdays</span><h3>Bluey and friends</h3><p>Bright little sets for their favourite characters.</p></div></article>
+          <article class="category-card"><img src="assets/coastal-baby-shower.webp" alt="Pastel coastal baby shower cookies with shells and vans"><div><span>Baby showers</span><h3>New little loves</h3><p>Soft colours, tiny details and the sweetest welcome.</p></div></article>
+          <article class="category-card"><img src="assets/hens-party.webp" alt="Blue and silver hens party sugar cookies"><div><span>Hens and bridal</span><h3>Girls' nights</h3><p>Chic, cheeky or completely custom for the bride.</p></div></article>
+          <article class="category-card"><img src="assets/engagement-cookies.webp" alt="Mint and white engagement cookies with rings and bows"><div><span>Weddings and engagements</span><h3>Love in icing</h3><p>For the yes, the shower and the day itself.</p></div></article>
+          <article class="category-card"><img src="assets/construction-birthday.webp" alt="Construction themed second birthday cookies with trucks and cones"><div><span>Kids' themes</span><h3>Trucks and diggers</h3><p>Big machines for tiny construction fans.</p></div></article>
+          <article class="category-card"><img src="assets/fairy-second-birthday.webp" alt="Fairy themed birthday cookies with flowers and magical doors"><div><span>Whimsical parties</span><h3>Fairy gardens</h3><p>Flowers, wings and a little sprinkle of magic.</p></div></article>
+          <article class="category-card"><img src="assets/aviation-second-birthday.webp" alt="Pastel airplane themed second birthday cookies"><div><span>Birthday adventures</span><h3>Up, up and away</h3><p>Planes, clouds and balloon-filled birthday sets.</p></div></article>
+          <article class="category-card"><img src="assets/superhero-third-birthday.webp" alt="Red superhero themed third birthday cookies"><div><span>Superhero parties</span><h3>Hero birthdays</h3><p>Bold, bright cookies for a birthday worth saving.</p></div></article>
         </div>
       </div>
     </section>
-    <section class="how" id="how">
-      <div class="shell">
-        <div class="section-intro"><span class="kicker">Simple, easy &amp; made with love</span><h2>How it works</h2></div>
-        <div class="how-grid">
-          <article class="step"><div class="step-visual"><span class="step-number">1</span><svg viewBox="0 0 64 64"><path d="M19 10h26v44H19zM25 6h14v8H25zM25 24h14M25 32h14M25 40h10"/><path d="m42 45 11-11 5 5-11 11-7 2z"/></svg></div><h3>Choose your design</h3><p>Browse ideas or tell us your vision. We'll help bring it to life.</p></article>
-          <div class="connector" aria-hidden="true"><svg viewBox="0 0 80 44"><path d="M4 26c18-21 31 16 47-2s18-5 25-12"/><path d="M36 16c-7-9-14-1-8 5 4 4 8 3 8-5z"/></svg></div>
-          <article class="step"><div class="step-visual"><span class="step-number">2</span><svg viewBox="0 0 64 64"><path d="M24 10 48 34 31 51 12 32zM20 14l-7-7M46 31l8-8M47 23l6 1 1 6"/><path d="m13 33-5 17 17-5M33 20l-8 8"/></svg></div><h3>We bake &amp; decorate</h3><p>Made to order in our council approved kitchen with love.</p></article>
-          <div class="connector" aria-hidden="true"><svg viewBox="0 0 80 44"><path d="M4 26c18-21 31 16 47-2s18-5 25-12"/><path d="M36 16c-7-9-14-1-8 5 4 4 8 3 8-5z"/></svg></div>
-          <article class="step"><div class="step-visual"><span class="step-number">3</span><svg viewBox="0 0 64 64"><path d="M9 21 32 11l23 10-23 10zM9 21v28l23 10 23-10V21M32 31v28"/><path d="M25 43c0-5 7-5 7 0 0-5 7-5 7 0 0 5-7 9-7 9s-7-4-7-9z"/></svg></div><h3>Ready for you</h3><p>Carefully packaged and ready for pick up at Baldivis.</p></article>
-        </div>
-      </div>
-    </section>
-    <section class="gallery" id="gallery" aria-label="Cookie gallery">
-      <img src="assets/cookie-02.webp" alt="Pink baby girl decorated sugar cookies"><img src="assets/cookie-03.webp" alt="Baptism themed decorated sugar cookies"><img src="assets/cookie-06.webp" alt="Blue birthday sugar cookies"><img src="assets/cookie-04.webp" alt="Pokemon themed sugar cookies"><img src="assets/cookie-05.webp" alt="Minecraft themed sugar cookies">
-    </section>
-    <section class="closing" id="contact">
-      <div class="shell closing-grid">
-        <div class="closing-copy"><div class="closing-cookie" aria-hidden="true"></div><div><h2>Every cookie tells a story.</h2><p>Let's create something sweet together</p></div></div>
-        <div class="closing-action"><a class="button-primary" href="mailto:Hailiefeatherstone@gmail.com?subject=Sugar%20Cookie%20Order%20Enquiry">Order Your Cookies <svg viewBox="0 0 24 24"><path d="M12 20.5s-6.5-4-8.6-7.7C1.5 9.4 3 5.6 6.6 5.2c2-.2 3.7.9 4.6 2.3.9-1.4 2.6-2.5 4.6-2.3 3.6.4 5.1 4.2 3.2 7.6-2.1 3.7-8.5 7.7-8.5 7.7z"/></svg></a><small>Made to order with love</small></div>
-      </div>
-    </section>
-    <section id="about" class="sr-only" aria-label="About The Sugar Cookie House">The Sugar Cookie House creates made-to-order customised sugar cookies in Baldivis, Western Australia, from a council-approved kitchen.</section>
+
+    <section class="how" id="how"><div class="shell"><div class="section-intro"><p class="eyebrow">Easy as one, two, three</p><h2>How it works</h2></div><div class="how-grid"><article><b>1</b><h3>Tell us your idea</h3><p>Send your date, occasion, colours, theme and how many you need.</p></article><article><b>2</b><h3>We make the magic</h3><p>Your cookies are baked and decorated just for your celebration.</p></article><article><b>3</b><h3>Ready for collection</h3><p>Your sweet little set is packed with care and ready for you.</p></article></div></div></section>
+
+    <section class="gallery-section" id="gallery"><div class="shell"><div class="section-intro"><p class="eyebrow">A peek at the sweet things</p><h2>Made for the memory book.</h2></div></div><div class="gallery-grid"><img src="assets/bluey-second-birthday.webp" alt="Bluey birthday cookie set"><img src="assets/fairy-second-birthday.webp" alt="Fairy birthday cookie set"><img src="assets/hens-party.webp" alt="Hens party cookie set"><img src="assets/engagement-cookies.webp" alt="Engagement cookie set"><img src="assets/aviation-second-birthday.webp" alt="Airplane birthday cookie set"><img src="assets/superhero-third-birthday.webp" alt="Superhero birthday cookie set"></div></section>
+
+    <section class="closing" id="contact"><div class="shell closing-card"><div><p class="eyebrow">Your idea, iced beautifully</p><h2>Every cookie tells a tiny story.</h2><p>Let’s make yours extra sweet.</p></div><a class="button-primary" href="mailto:Hailiefeatherstone@gmail.com?subject=Sugar%20Cookie%20Order%20Enquiry">Start an order <span>♡</span></a></div></section>
   </main>
 </div>
-<dialog class="faq-dialog" id="faqDialog">
-  <div class="faq-panel">
-    <header><h2>Frequently asked questions</h2><button class="faq-close" id="faqClose" aria-label="Close FAQ">&times;</button></header>
-    <details open><summary>How do I place an order?</summary><p>Email your date, occasion, quantity, theme and colour ideas. Each set is made to order, so the details are confirmed directly.</p></details>
-    <details><summary>Where is collection?</summary><p>The Sugar Cookie House is located in Baldivis, Western Australia.</p></details>
-    <details><summary>Can cookies be personalised?</summary><p>Yes. Names, colours, themes and messages can be discussed as part of a custom order.</p></details>
-  </div>
-</dialog>
+
+<dialog class="faq-dialog" id="faqDialog"><div class="faq-panel"><header><div><p class="eyebrow">A few sweet answers</p><h2>Frequently asked questions</h2></div><button class="faq-close" id="faqClose" aria-label="Close FAQ">×</button></header><details open><summary>How do I place an order?</summary><p>Email your date, occasion, quantity, theme and colour ideas. We’ll chat through the sweet details together.</p></details><details><summary>Where is collection?</summary><p>Collection is in Baldivis, Western Australia.</p></details><details><summary>Can cookies be personalised?</summary><p>Absolutely. Names, colours, themes and special messages can all be part of your set.</p></details><details><summary>Do you make wedding cookies?</summary><p>Yes. Engagements, bridal showers, hens parties and wedding favours are all welcome.</p></details></div></dialog>
 <script src="site.js" defer></script>
 </body>
 </html>
