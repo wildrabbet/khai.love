@@ -1,0 +1,13 @@
+/* Business-facing refinements layered over the original KHAI visual system. */
+.business-proof{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:28px}
+.business-proof article{padding:16px 18px;border:1px solid rgba(232,132,189,.16);border-radius:14px;background:rgba(20,9,30,.62)}
+.business-proof b{display:block;color:#ffc1e4;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+.business-proof span{color:#c2a9ca;font-size:.92rem;line-height:1.45}
+.local-business-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.local-business-card{padding:26px;border:1px solid rgba(232,132,189,.14);border-radius:16px;background:linear-gradient(165deg,rgba(21,10,32,.94),rgba(13,6,22,.9))}
+.local-business-card h3{margin:0 0 9px;color:#f8edf9}.local-business-card p{color:#c2a9ca;margin:0;line-height:1.65}
+.client-path{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.client-path article{padding:24px 20px;border-top:1px solid rgba(232,132,189,.24)}
+.client-path small{display:block;color:#e884bd;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}.client-path p{color:#c2a9ca;font-size:.94rem;line-height:1.6}
+.price-note{margin-top:22px;padding:18px 20px;border-left:2px solid #e884bd;background:rgba(232,132,189,.06);color:#c2a9ca;border-radius:0 12px 12px 0}
+@media(max-width:900px){.business-proof,.client-path{grid-template-columns:1fr 1fr}.local-business-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.business-proof,.client-path{grid-template-columns:1fr}}
