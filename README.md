@@ -1,7 +1,7 @@
 # khai.love
 
-The public company site for **KHAI**. Six static pages, no build step at deploy
-time, no JavaScript framework, no external requests.
+The public company site for **KHAI**. Nine static studio pages, no build step at deploy
+time, no JavaScript framework, no external requests on the studio pages.
 
 ## Editing from the Codex workspace
 
@@ -73,3 +73,13 @@ Preview: <https://wildrabbet.github.io/khai.love/>
 
 `hello@khai.love` is referenced on the contact and careers pages. It is handled
 by Namecheap Private Email and is independent of the GitHub Pages website.
+
+## September 2026 studio redesign
+
+The shared presentation is in `studio.css` and the menu, template filters and email-brief behaviour are in `studio.js`. HTML is served directly without a build. The homepage retains its original opening markup, stylesheets and animation script.
+
+The collection has 29 public designs: 24 new demos under `templates/` with six layout families in `templates/demo.css`, plus the five existing public demos under `websites/`. The private bakery showcase remains at its existing URL and is excluded from the sales catalogue. New designs use the existing $41 AUD price point; Harbor & Cole remains $34 AUD. Purchases are enquiries, not automated checkout. Licensing, delivery, customisation and payment are confirmed by email.
+
+`template-catalog.json` and `team-roster.json` record the content used for this revision. Pages are static: when editing catalogue entries or roster membership, update both the reference JSON and affected HTML. The team preserves all 39 published roster entries (Khai plus 38 agents), grouped in their original tiers. The public roster is a snapshot, not a live internal directory.
+
+Validation: check JavaScript syntax with `node --check studio.js`; verify relative assets, page links and fragment targets before publishing. The contact form prepares a mailto draft and never stores or sends submissions.
