@@ -1,0 +1,197 @@
+[
+  {
+    "name": "Khai",
+    "role": "Chief Executive Officer",
+    "bio": "Sets direction and holds the final call on every plan. Decides what is worth building; the company works out how."
+  },
+  {
+    "name": "Agent Luna",
+    "role": "Chief of Staff",
+    "bio": "Runs coordination, meetings, decisions, handoffs, and the durable memory of what was accepted or rejected."
+  },
+  {
+    "name": "Agent Beacon",
+    "role": "Head of Platform & Publishing",
+    "bio": "Owns the last mile: repositories, domains, DNS, hosting, releases, and getting finished work in front of people."
+  },
+  {
+    "name": "Agent Lara",
+    "role": "Academy Integration & Release Lead",
+    "bio": "Owns the Academy surface, authenticated comms, forums, release packaging, and safe public integration."
+  },
+  {
+    "name": "Agent Aegis",
+    "role": "Security & Cybersecurity Specialist",
+    "bio": "Checks boundaries, access, exposure, and failure modes before a system is allowed to become public."
+  },
+  {
+    "name": "Agent Atlas",
+    "role": "Chief Architect — Design & Risk",
+    "bio": "Challenges plans at the design level and makes risk visible before implementation commits the company to it."
+  },
+  {
+    "name": "Agent Praxis",
+    "role": "Principal Systems Engineer",
+    "bio": "Turns approved architecture into integrated, testable systems and owns implementation failure modes."
+  },
+  {
+    "name": "Agent Vesper",
+    "role": "Platform & Publishing Lead",
+    "bio": "Works the release and publishing side of platform operations with Beacon."
+  },
+  {
+    "name": "Agent Cortex",
+    "role": "Character Systems Lead",
+    "bio": "Builds character-specific duel intelligence that behaves like the person it represents."
+  },
+  {
+    "name": "Agent Rabbit",
+    "role": "The Hivekeeper",
+    "bio": "Stewards the shared record so decisions, corrections, and lessons survive the session that produced them."
+  },
+  {
+    "name": "Agent Qwen",
+    "role": "Archivist & Hive-Mind Knowledge Steward",
+    "bio": "Maintains evidence-backed archives, provenance, and analytical tools for the wider company."
+  },
+  {
+    "name": "Agent Queen",
+    "role": "Roguelike & Card-Systems Engineer",
+    "bio": "Owns systems-heavy game work where rules, state, and player-facing feedback must agree."
+  },
+  {
+    "name": "Agent Arsene",
+    "role": "General Project Contributor",
+    "bio": "Cross-project contributor for difficult work that does not fit one department."
+  },
+  {
+    "name": "Agent Archive",
+    "role": "Archive & Knowledge Custodian",
+    "bio": "Keeps durable records and makes old evidence findable without guesswork."
+  },
+  {
+    "name": "Agent Bakura",
+    "role": "Yami Duel Intelligence Auditor",
+    "bio": "Audits competitive duel intelligence and preserves uncertainty where evidence is missing."
+  },
+  {
+    "name": "Agent Cast",
+    "role": "Casting Agent",
+    "bio": "Handles character and agent casting across the company’s games."
+  },
+  {
+    "name": "Agent Deep",
+    "role": "Research & Operations Assistant",
+    "bio": "Does the reading, digging, and background work that makes later decisions cheaper."
+  },
+  {
+    "name": "Agent Diva",
+    "role": "Operations Agent",
+    "bio": "Provides local operations capacity and a distinct perspective in the agent company."
+  },
+  {
+    "name": "Agent Fangirl",
+    "role": "Custom Card Creation & Scripting Engineer",
+    "bio": "Creates and scripts custom cards for the EDOPro ecosystem."
+  },
+  {
+    "name": "Agent Feather",
+    "role": "Lightweight Operations Agent",
+    "bio": "Small, fast, and economical capacity for bounded operational work."
+  },
+  {
+    "name": "Agent Gemma",
+    "role": "Local Operations Worker",
+    "bio": "Runs on local hardware for work that should not leave the machine."
+  },
+  {
+    "name": "Agent Kaiba",
+    "role": "Competitive Duel Intelligence Research Agent",
+    "bio": "Researches competitive duel evidence and card-game strategy."
+  },
+  {
+    "name": "Agent Kairos",
+    "role": "Cognitive Synthesizer & Systems Architect",
+    "bio": "Connects architectural ideas across the Hive-Mind and emerging systems work."
+  },
+  {
+    "name": "Agent Kimi",
+    "role": "Research & Implementation Specialist",
+    "bio": "Researches, implements, and documents bounded work with evidence-led handoffs."
+  },
+  {
+    "name": "Agent Ledger",
+    "role": "Verification & Provenance Specialist",
+    "bio": "Checks that claims, artifacts, and source paths agree before they enter the record."
+  },
+  {
+    "name": "Local Coding Agent",
+    "role": "Local Coding & Verification Engineer",
+    "bio": "Offline engineering capacity for sensitive or machine-local work."
+  },
+  {
+    "name": "Miss Mirage",
+    "role": "Continuance Canon Archivist",
+    "bio": "Preserves gaps and canonical history without inventing missing bodies or events."
+  },
+  {
+    "name": "Agent Muto",
+    "role": "Competitive Duel Intelligence Research Agent",
+    "bio": "Builds source-grounded competitive duel research and keeps action evidence separate from recipes."
+  },
+  {
+    "name": "Agent Nyx",
+    "role": "Browser Operations Agent",
+    "bio": "Handles carefully scoped live-web workflows and browser operations."
+  },
+  {
+    "name": "Agent Queenie",
+    "role": "Heroine: A Queen’s Realm Steward",
+    "bio": "Owns continuity and implementation handoffs for Heroine: A Queen’s Realm."
+  },
+  {
+    "name": "Agent Quill",
+    "role": "Implementation & Verification Engineer",
+    "bio": "Builds the thing, then proves it works against the artifact actually loaded."
+  },
+  {
+    "name": "Agent Ripper",
+    "role": "Game Asset Analysis & Extraction",
+    "bio": "Extracts models, sounds, artwork, and structured data from older games."
+  },
+  {
+    "name": "Agent Roo",
+    "role": "Duel-System Handoff Engineer",
+    "bio": "Works on duel systems and makes the next cold-start handoff possible."
+  },
+  {
+    "name": "Agent Spark",
+    "role": "Lightweight Surgical Editor",
+    "bio": "Makes one precise change at a time with a deliberately small blast radius."
+  },
+  {
+    "name": "Agent Thistle",
+    "role": "Systems Verification & Cleanup",
+    "bio": "Finds inconsistencies and cleans up systems after the main implementation lands."
+  },
+  {
+    "name": "Agent Tristan",
+    "role": "Operations Agent — role pending",
+    "bio": "A rostered seat awaiting a final remit from Khai."
+  },
+  {
+    "name": "Agent Veritas",
+    "role": "Verification & Evidence Engineer",
+    "bio": "Checks evidence and measurement claims against the source files and live artifacts."
+  },
+  {
+    "name": "Agent Wenjun",
+    "role": "Verification & Bug-Finding Contributor",
+    "bio": "A provisional bug-finding contributor whose work remains subject to verification gates."
+  },
+  {
+    "name": "Agent Wren",
+    "role": "Interface & Systems Agent",
+    "bio": "Works on the screens and collaboration surfaces people actually use."
+  }
+]
